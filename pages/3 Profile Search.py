@@ -19,10 +19,11 @@ def search_person(person_name, company_name=None):
     search = GoogleSearch(params)
     results = search.get_dict()
     if "news_results" in results:
-        return results
+        return results["news_results"]
     else:
         params = {
         "q": query,
+        "engine": "google",
         "google_domain": "google.com",
         # Add more parameters as needed for better targeting
         "num": 10,     # Number of results to fetch
@@ -30,6 +31,7 @@ def search_person(person_name, company_name=None):
         }
         search = GoogleSearch(params)
         results = search.get_dict()
+        print(results)
         return results
 
 st.title("Profile Searcher 👤")
@@ -44,24 +46,19 @@ if st.sidebar.button("Search"):
     if person_name:
         results = search_person(person_name, company_name)
 
-        if "news_results" in results:
-            news_results = results["news_results"]
-            for result in news_results:
-                # Display article info and thumbnail side by side
-                col1, col2 = st.columns([1, 5])
-                
-                with col1:
-                    st.image(result['thumbnail'], use_column_width=True)
-                
-                with col2:
-                    st.write(f"[{result['title']}]({result['link']})")
-                    st.write(f"**Source:** {result['source']}")
-                    st.write(f"**Date:** {result['date']}")
-                    st.write(f"**Snippet:** {result['snippet']}")
-                
-                st.write("---")
-        else:
-            st.write(f"No results for {person_name} found!")
-
+        for result in results:
+            # Display article info and thumbnail side by side
+            col1, col2 = st.columns([1, 5])
+            
+            with col1:
+                st.image(result['thumbnail'], use_column_width=True)
+            
+            with col2:
+                st.write(f"[{result['title']}]({result['link']})")
+                st.write(f"**Source:** {result['source']}")
+                st.write(f"**Date:** {result['date']}")
+                st.write(f"**Snippet:** {result['snippet']}")
+            
+            st.write("---")
 else:
     st.write("Search for a prospect's name in the sidebar to the left!")
