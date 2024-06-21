@@ -3,14 +3,12 @@ from serpapi import GoogleSearch
 
 def search_person(person_name, company_name=None):
     if company_name:
-        query = f'{person_name} "{company_name}"'
+        query = f'{person_name} {company_name}'
     else:
         query = f'{person_name} startup founder'
         
     params = {
         "q": query,
-        "hl": "en",
-        "gl": "us",
         "google_domain": "google.com",
         # Add more parameters as needed for better targeting
         "tbm": "nws",  # Search only in news for timely information
