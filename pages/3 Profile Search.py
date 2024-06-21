@@ -5,7 +5,7 @@ def search_person(person_name, company_name=None):
     if company_name:
         query = f'{person_name} {company_name}'
     else:
-        query = f'{person_name} startup founder'
+        query = f'{person_name} startup'
         
     params = {
         "q": query,
@@ -18,7 +18,19 @@ def search_person(person_name, company_name=None):
 
     search = GoogleSearch(params)
     results = search.get_dict()
-    return results
+    if "news_results" in results:
+        return results
+    else:
+        params = {
+        "q": query,
+        "google_domain": "google.com",
+        # Add more parameters as needed for better targeting
+        "num": 10,     # Number of results to fetch
+        "api_key":st.secrets["serp_api_key"],
+        }
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        return results
 
 st.title("Profile Searcher 👤")
 st.write("---")
