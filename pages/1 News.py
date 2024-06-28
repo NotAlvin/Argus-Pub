@@ -13,7 +13,7 @@ st.set_page_config(  # Alternate names: setup_page, page, layout
 )
 
 # Streamlit dashboard
-st.title("Latest IPO News 🗞️")
+st.title("Latest Liquidity Event News 🗞️")
 st.write("---")
 
 st.sidebar.header("Filter News")
@@ -22,12 +22,13 @@ load_news_button = st.sidebar.button("Load News")
 source = st.sidebar.radio("Choose a news source", ("CNBC", "Market Insights", "Stock Analysis"))
 
 news_df = load_or_scrape_file(source.replace(' ', '').lower())
+news_df['Time'] = pd.to_datetime(news_df['Time'])
 
 if load_news_button:
     cutoff_date = datetime.now() - timedelta(days=max_days)
     
     # Filter the DataFrame based on the selected number of days
-    # filtered_news_df = news_df[news_df['Time'] >= cutoff_date]
+    filtered_news_df = news_df[news_df['Time'] >= cutoff_date]
 
     # for i, row in filtered_news_df.iterrows():
     #     st.write(f"{row['Time'].strftime('%b %d, %Y, %I:%M %p %Z') if not pd.isnull(row['Time']) else 'Invalid date'}")
@@ -41,7 +42,7 @@ if load_news_button:
     
     # Display the entire filtered dataframe
     st.write("## Full News Data")
-    st.dataframe(news_df)
+    st.dataframe(filtered_news_df)
 
 else:
     st.write(f"Select a news lookback period in the sidebar to load the news!")
