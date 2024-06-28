@@ -28,18 +28,12 @@ if load_news_button:
     cutoff_date = datetime.now() - timedelta(days=max_days)
     
     # Filter the DataFrame based on the selected number of days
-    filtered_news_df = news_df[news_df['Time'] >= cutoff_date]
-
-    # for i, row in filtered_news_df.iterrows():
-    #     st.write(f"{row['Time'].strftime('%b %d, %Y, %I:%M %p %Z') if not pd.isnull(row['Time']) else 'Invalid date'}")
-    #     with st.expander(row['Title']):
-    #         st.write(f"**Source:** {row['Source']}")
-    #         st.write(f"**Description:** {row['Description']}")
-    #         st.write(f"**Tickers:** {row['Tickers']}")
-            
-    #         if row['Image URL'] != "No image":
-    #             st.image(row['Image URL'])
-    
+    if source == 'CNBC':
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['Time', 'Title', 'Article content', 'Source', 'Link']
+    if source == 'Market Insights':
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['time', 'title', 'Article content', 'source' 'link', 'ticker', 'Managers', 'Members of the board', 'Shareholders']
+    if source == 'Stock Analysis':
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['Time', 'Title', 'Description', 'Source', 'Tickers']
     # Display the entire filtered dataframe
     st.write("## Full News Data")
     st.dataframe(filtered_news_df)
