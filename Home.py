@@ -12,7 +12,7 @@ st.write("---")
 
 st.markdown(
 """
-**Argus** is your premier prospecting tool, designed to keep you ahead of the curve in the world of finance and investment. Our platform provides a live news feed of upcoming Initial Public Offering (IPO) news, alongside comprehensive historical Venture Capital (VC) deal information. Whether you're an investor, financial analyst, or simply someone looking to stay informed, Argus offers the insights you need to identify soon-to-be wealthy founders and promising investment opportunities.
+**Argus** is the Global Innovation Labs' latest prospecting tool, designed to keep you ahead of the curve in the world of finance and investment. Our platform provides a live news feed of upcoming Initial Public Offering (IPO) news, alongside comprehensive historical Venture Capital (VC) deal information. Whether you're an investor, financial analyst, or simply someone looking to stay informed, Argus offers the insights you need to identify soon-to-be wealthy founders and promising investment opportunities.
 """)
 st.write("---")
 st.markdown(

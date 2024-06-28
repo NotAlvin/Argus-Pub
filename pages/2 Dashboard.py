@@ -22,8 +22,8 @@ def to_excel(df1, df2):
     return processed_data
 
 # Load the data
-cb_deals = pd.read_csv('./data/cleaned_cb_deals.csv')
-ipo_data = pd.read_csv('./data/ipo_dataset.csv')
+cb_deals = pd.read_csv('./utils/data/CB Insights/cleaned_cb_deals.csv')
+ipo_data = pd.read_csv('./utils/data/IPO dataset/ipo_dataset.csv')
 
 # Ensure 'Deal Date' is in datetime format
 cb_deals['Deal Date'] = pd.to_datetime(cb_deals['Deal Date'])
@@ -166,14 +166,17 @@ try:
                     st.write(f"No IPOs on {selected_date}.")
                 
                 # Add download button
-                if st.button('Download Data'):
-                    excel_data = to_excel(deals_in_range, ipos_in_range)
-                    st.download_button(
-                        label="Download Excel",
-                        data=excel_data,
-                        file_name="filtered_data.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                a = deals_of_the_day.copy()
+                b = ipos_of_the_day.copy()
+                a['Deal Date'] = str(selected_date)
+                b['IPO Date'] = str(selected_date)
+                excel_data = to_excel(a, b)
+                st.download_button(
+                    label="Download Excel",
+                    data=excel_data,
+                    file_name=f"filtered_data_{selected_date}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
             else:
                 st.write("Select a date from the dropdown to display deal information.")
     else:

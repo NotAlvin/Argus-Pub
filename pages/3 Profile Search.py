@@ -13,7 +13,7 @@ def search_person(person_name, company_name=None):
         # Add more parameters as needed for better targeting
         "tbm": "nws",  # Search only in news for timely information
         "num": 10,     # Number of results to fetch
-        "api_key":st.secrets["serp_api_key"],
+        "api_key": st.secrets["serp_api_key"],
     }
 
     search = GoogleSearch(params)
