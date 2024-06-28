@@ -29,11 +29,11 @@ if load_news_button:
     
     # Filter the DataFrame based on the selected number of days
     if source == 'CNBC':
-        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['Time', 'Title', 'Article content', 'Source', 'Link']
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date][['Time', 'Title', 'Article content', 'Source', 'Link']]
     if source == 'Market Insights':
-        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['time', 'title', 'Article content', 'source' 'link', 'ticker', 'Managers', 'Members of the board', 'Shareholders']
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'source', 'link', 'ticker', 'Managers', 'Members of the board', 'Shareholders']]
     if source == 'Stock Analysis':
-        filtered_news_df = news_df[news_df['Time'] >= cutoff_date]['Time', 'Title', 'Description', 'Source', 'Tickers']
+        filtered_news_df = news_df[news_df['Time'] >= cutoff_date][['Time', 'Title', 'Description', 'Source', 'Tickers']]
     # Display the entire filtered dataframe
     st.write("## Full News Data")
     st.dataframe(filtered_news_df)
