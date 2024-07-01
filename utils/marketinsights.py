@@ -4,6 +4,17 @@ import pandas as pd
 import urllib
 from ast import literal_eval
 from datetime import datetime
+from io import BytesIO
+
+def to_excel(df1, df2, df3):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df1.to_excel(writer, index=False, sheet_name='CNBC')
+    df2.to_excel(writer, index=False, sheet_name='Market Insights')
+    df3.to_excel(writer, index=False, sheet_name='Stock Analysis')
+    writer.close()
+    processed_data = output.getvalue()
+    return processed_data
 
 def scrape_main_page_marketinsights():
     """
@@ -188,8 +199,7 @@ def process_tables(data):
 
 def scrape_marketinsights():
     df = scrape_main_page_marketinsights()
-    df.to_csv('temp_market_insights_1.csv', index = False)
-    
+
     df['raw'] = df['link'].apply(scrape_url)
     df['tables'] = df['raw'].apply(scrape_tables)
     df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))

@@ -32,6 +32,9 @@ def get_key_executives(soup):
             name = cols[0].text.strip()
             position = cols[1].text.strip()
             storage[name] = position
+
+        storage = [[name, title, '-', '-', 'Executives'] for name, title in storage.items()]
+
         return storage
     except:
         return
@@ -133,8 +136,7 @@ def get_latest_news():
 def scrape_stockanalysis():
     df = get_latest_news()
     df['raw'] = df['Tickers'].apply(scrape_ticker_information)
-    df['Related People'] = df['raw'].apply(get_key_executives)
+    df['Executives'] = df['raw'].apply(get_key_executives)
     df['Description'] = df['raw'].apply(get_summary)
     df[['Country', 'Industry', 'Sector']] = df['raw'].apply(get_info)
-    df.to_csv('full_stock_analysis')
     return df
