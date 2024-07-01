@@ -2,7 +2,61 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-def scrape_stockanalysis():
+
+def scrape_ticker_information(ticker):
+    ticker = ticker.split(',')[-1].strip()
+    # URL of the website
+    url = f'https://stockanalysis.com/stocks/{ticker}/company/'
+
+    # Send a GET request to the URL
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception if the request was unsuccessful
+        # Parse the HTML content of the page with BeautifulSoup
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup
+    except:
+        return
+
+def get_key_executives(soup):
+    # Find the table containing key executives
+    try:
+        executives_table = soup.find('table', class_='mb-6')
+
+        # Initialize lists to store names and positions
+        storage = {}
+
+        # Extract data from the table
+        for row in executives_table.find_all('tr', class_='border-b border-gray-200 dark:border-dark-700'):
+            cols = row.find_all('td')
+            name = cols[0].text.strip()
+            position = cols[1].text.strip()
+            storage[name] = position
+        return storage
+    except:
+        return
+def get_summary(soup):
+    try:
+        company_description_header = soup.find('h1', text='Company Description')
+        company_description = company_description_header.find_next('p').text.strip() if company_description_header else None
+        return company_description
+    except:
+        return
+    
+def get_info(soup):
+    try:
+        def extract_info(label):
+            cell = soup.find('td', text=label)
+            return cell.find_next('td').text.strip() if cell else None
+
+        country = extract_info('Country')
+        industry = extract_info('Industry')
+        sector = extract_info('Sector')
+        return pd.Series([country, industry, sector])
+    except Exception as e:
+        return pd.Series([None, None, None])
+
+def get_latest_news():
     """
     Scrapes the latest IPO news articles from StockAnalysis website.
     
@@ -75,3 +129,12 @@ def scrape_stockanalysis():
     news_df['Time'] = pd.to_datetime(news_df['Time'], errors='coerce')
 
     return news_df
+
+def scrape_stockanalysis():
+    df = get_latest_news()
+    df['raw'] = df['Tickers'].apply(scrape_ticker_information)
+    df['Related People'] = df['raw'].apply(get_key_executives)
+    df['Description'] = df['raw'].apply(get_summary)
+    df[['Country', 'Industry', 'Sector']] = df['raw'].apply(get_info)
+    df.to_csv('full_stock_analysis')
+    return df

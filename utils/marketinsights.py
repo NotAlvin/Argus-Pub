@@ -76,16 +76,17 @@ def scrape_main_page_marketinsights():
     df['Article content'] = df['link'].apply(extract_marketscreener_article)
     return df
 
-def scrape_tables(url):
+def process_names(names):
+    elements = [element for element in names.split(' ') if element]
+    name = elements[:-1]
+    return ' '.join(name)
+
+def scrape_url(url):
+    url = url.split('news')[0] + 'company/'
     """
     Scrapes tables of managers, members of the board, and shareholders from a given URL.
     Returns a dictionary with the extracted data.
     """
-    def process_names(names):
-        elements = [element for element in names.split(' ') if element]
-        name = elements[:-1]
-        role = f'({elements[-1]})'
-        return ' '.join(name) + ' ' + role
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
@@ -94,18 +95,18 @@ def scrape_tables(url):
     response = requests.get(url, headers=headers)
     html_content = urllib.parse.unquote(response.text)
     soup = BeautifulSoup(html_content, 'html.parser')
+    return soup
 
+def scrape_tables(soup):
     to_find = {'Managers': None, 'Members of the board': None, 'Name': None}
     tables = soup.find_all('div', class_='card-content')
-
     for table in tables:
         try:
             title = table.find('tr').find('th').get_text(strip=True)
+            headers = [header.get_text(strip = True) for header in table.find_all('th')]
             if title in to_find.keys():
                 temp_table = table.find('table')
-                headers = [header.get_text(strip=True) for header in table.find_all('th')]
                 rows = temp_table.find('tbody').find_all('tr')
-
                 data = []
                 for row in rows:
                     cols = row.find_all('td')
@@ -113,44 +114,110 @@ def scrape_tables(url):
 
                 df = pd.DataFrame(data, columns=headers)
                 df[title] = df[title].apply(process_names)
-                to_find[title] = df.to_dict()
-        except:
+                if title != 'Name':
+                    to_find[title] = df.to_dict()
+                else:
+                    if 'Valuation' in headers:
+                        to_find['Shareholders'] = df.to_dict()
+                        break
+        except Exception:
             pass
-
     return to_find
 
 def safe_literal_eval(x):
     """
     Safely evaluate a string representation of a Python dictionary.
     """
-    if pd.isna(x) or x is None:
+    if x is None:
+        return {}
+    if pd.isna(x):
         return {}
     try:
         return literal_eval(x)
     except (ValueError, SyntaxError):
         return {}
+    
+# Add a 'Type' column to distinguish between Managers and Board members
+def process_temp_df(df):
+    name = df.columns[0]
+    df.columns = ['Name'] + list(df.columns[1:])
+    df['Executive Functions'] = name
+    return df
+
+def process_tables(data):
+    data = safe_literal_eval(data)
+    # Extract and flatten the nested dictionaries
+    if 'Managers' in data.keys() or 'Members of the board' in data.keys():
+        managers_data = data['Managers']
+        board_data = data['Members of the board']
+        if managers_data:
+        # Convert to DataFrames
+            managers_df = pd.DataFrame(managers_data)
+            managers_df = process_temp_df(managers_df)
+            if board_data:
+                board_df = pd.DataFrame(board_data)
+                board_df = process_temp_df(board_df)
+        
+                # Concatenate the DataFrames
+                temp_df = pd.concat([managers_df, board_df], ignore_index=True)
+            else:
+                temp_df = board_df
+
+            df_combined = temp_df.groupby(['Name', 'Title']).agg({
+                'Age': 'first',  # Take the first non-null value for 'Age'
+                'Since': 'first',  # Take the first non-null value for 'Since'
+                'Executive Functions': lambda x: ', '.join(sorted(set(x)))  # Combine and sort unique 'Type' values
+            }).reset_index()
+
+            df_combined.index = df_combined['Name']
+
+            executive_list = df_combined.to_dict(orient = 'split')['data']
+        else:
+            executive_list = []
+    else:
+        executive_list = []
+        
+    if 'Shareholders' in data.keys():
+        shareholder_data = data['Shareholders']
+        shareholder_df = pd.DataFrame(shareholder_data)
+        shareholder_list = shareholder_df.to_dict(orient = 'split')['data']
+    else:
+        shareholder_list = []
+
+    return executive_list, shareholder_list
 
 def scrape_marketinsights():
     df = scrape_main_page_marketinsights()
-    df['tables'] = df['link'].apply(lambda x: scrape_tables(x.split('news')[0] + 'company/'))
+    df.to_csv('temp_market_insights_1.csv', index = False)
+    
+    df['raw'] = df['link'].apply(scrape_url)
+    df['tables'] = df['raw'].apply(scrape_tables)
+    df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
 
-    # Apply the transformations with error handling
-    df['Managers'] = df['tables'].apply(lambda x: safe_literal_eval(x).get('Managers', []))
-    df['Members of the board'] = df['tables'].apply(lambda x: safe_literal_eval(x).get('Members of the board', []))
-    df['Shareholders'] = df['tables'].apply(lambda x: safe_literal_eval(x).get('Name', []))
-
-    current_date = datetime.now().date()
+    df_temp.columns = ['Executives', 'Shareholders']
+    df = pd.concat([df, df_temp], axis = 1)
 
     # Function to convert time strings to datetime using the current date
-    def convert_time_to_datetime(time_str):
-        return datetime.strptime(f"{current_date} {time_str}", "%Y-%m-%d %I:%M%p")
-
-    # Function to convert month-day strings to datetime
-    def convert_month_day_to_datetime(date_str):
-        return datetime.strptime(date_str, "%b. %d").replace(year=datetime.now().year)
+    def convert_to_datetime(date_str):
+        formats = ['%I:%M%p', '%b. %d', '%Y-%m-%d']
+        current_year = datetime.now().year
+        for fmt in formats:
+            try:
+                # If the date string is in time format, assume it's from the current date
+                if fmt == '%I:%M%p':
+                    return datetime.combine(datetime.today(), datetime.strptime(date_str, fmt).time())
+                elif fmt == '%b. %d':
+                # Append the current year to the date string
+                    date_str_with_year = f"{date_str} {current_year}"
+                    return datetime.strptime(date_str_with_year, f"{fmt} %Y")
+                else:
+                    return datetime.strptime(date_str, fmt)
+            except ValueError:
+                pass
+        # If none of the formats match, return None
+        return None
 
     # Apply the conversion functions
-    df['Time'] = df['date'].apply(
-        lambda x: convert_time_to_datetime(x) if ":" in x else convert_month_day_to_datetime(x)
-    )
+    df['Time'] = df['date'].apply(convert_to_datetime)
+    df.drop(['date'], axis = 1)
     return df
