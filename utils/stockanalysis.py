@@ -38,6 +38,7 @@ def get_key_executives(soup):
         return storage
     except:
         return
+    
 def get_summary(soup):
     try:
         company_description_header = soup.find('h1', text='Company Description')

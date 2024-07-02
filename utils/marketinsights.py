@@ -6,6 +6,19 @@ from ast import literal_eval
 from datetime import datetime
 from io import BytesIO
 
+def safe_literal_eval(x):
+    """
+    Safely evaluate a string representation of a Python dictionary.
+    """
+    if x is None:
+        return {}
+    if pd.isna(x):
+        return {}
+    try:
+        return literal_eval(x)
+    except (ValueError, SyntaxError):
+        return {}
+
 def to_excel(df1, df2, df3):
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -15,6 +28,41 @@ def to_excel(df1, df2, df3):
     writer.close()
     processed_data = output.getvalue()
     return processed_data
+
+def get_country_mapping():
+    url = "https://www.countrycode.org"
+    response = requests.get(url)
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the table
+    table = soup.find('table')
+
+    # Extract the table headers
+    headers = []
+    for th in table.find_all('th'):
+        headers.append(th.text.strip())
+
+    # Extract the table rows
+    rows = []
+    for tr in table.find_all('tr'):
+        cells = tr.find_all('td')
+        row = [cell.text.strip() for cell in cells]
+        if row:
+            rows.append(row)
+
+    # Create a DataFrame
+    df = pd.DataFrame(rows, columns=headers)
+    return df
+
+def get_country(storage, mapping):
+    phone_number = safe_literal_eval(storage)['Phone Number']
+    extension = phone_number.split(' ')[0]
+    if '+' not in extension:
+        return 'Unknown'
+    else:
+        
 
 def scrape_main_page_marketinsights():
     """
@@ -135,19 +183,58 @@ def scrape_tables(soup):
             pass
     return to_find
 
-def safe_literal_eval(x):
-    """
-    Safely evaluate a string representation of a Python dictionary.
-    """
-    if x is None:
-        return {}
-    if pd.isna(x):
-        return {}
-    try:
-        return literal_eval(x)
-    except (ValueError, SyntaxError):
-        return {}
-    
+def get_industry(soup):
+    # Locate all card-header divs
+    card_headers = soup.find_all('div', class_='card-header')
+
+    # Iterate through each card-header div and extract the required information
+    for card_header in card_headers:
+        try:
+            # Get the title text from the card-header div
+            title_text = card_header.get_text(strip=True)
+            if title_text == 'Sector':
+                # Find the next sibling card-content div
+                card_content = card_header.find_next_sibling('div', class_='card-content')
+                
+                if card_content:
+                    # Get the sector details from the card-content div
+                    sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
+                    actual = ''
+                    for sector in sector_details:
+                        if sector:
+                            actual = sector
+        except:
+            pass
+    return actual
+
+def get_contact_information(soup):
+    result = {}
+    # Find the div with class 'card-content'
+    contact_info_div = soup.find_all('div', class_ = 'card mb-15')
+    for div in contact_info_div:
+        try:
+        # Extract the paragraphs within this div
+            contact_info_paragraphs = div.find_all('p', class_='m-0')
+            if contact_info_paragraphs:
+                
+                company_name = contact_info_paragraphs[0].text
+                address_line_1 = contact_info_paragraphs[1].text
+                address_line_2 = contact_info_paragraphs[2].text
+                phone_number = contact_info_paragraphs[3].text
+
+                # Extract the website URL
+                website = div.find('a', class_='m-0')['href']
+
+            # Print the extracted information
+            result['Company Name'] = company_name
+            result['Address Line 1'] = address_line_1
+            result['Address Line 2'] = address_line_2
+            result['Phone Number'] = phone_number
+            result['Website'] = website
+        except:
+            pass
+    return result
+
 # Add a 'Type' column to distinguish between Managers and Board members
 def process_temp_df(df):
     name = df.columns[0]
@@ -198,9 +285,14 @@ def process_tables(data):
     return executive_list, shareholder_list
 
 def scrape_marketinsights():
+    country_mapping = get_country_mapping()
+
     df = scrape_main_page_marketinsights()
 
     df['raw'] = df['link'].apply(scrape_url)
+    df['Contact Info'] = df['raw'].apply(get_contact_information)
+    df['Country'] = df['Contact Info']
+    df['Industry'] = df['raw'].apply(get_industry)
     df['tables'] = df['raw'].apply(scrape_tables)
     df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
 
