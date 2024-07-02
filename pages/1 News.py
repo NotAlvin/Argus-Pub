@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from utils.pipeline import load_or_scrape_file
 from utils.marketinsights import safe_literal_eval
+from xlsxwriter import Workbook
 from io import BytesIO
 
 def to_excel(cutoff_date):
