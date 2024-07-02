@@ -70,7 +70,7 @@ def scrape_cnbc():
                 'Link': link,
                 'Image': image,
                 'Source': source,
-                'Date': date
+                'Time': date
             })
     
     # Convert to DataFrame for tabular representation
@@ -80,23 +80,21 @@ def scrape_cnbc():
     
     def get_article_content(url):
         """Fetch and extract the article content from a given URL."""
-        response = requests.get(url)
-        html_content = urllib.parse.unquote(response.text)
-        soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # Find all paragraphs within the specified div
-        article_body = soup.find('div', class_='ArticleBody-articleBody')
-        
-        # Extract text from paragraphs
-        if article_body:
-            paragraphs = article_body.find_all('p')
-            article_text = '\n'.join([para.get_text() for para in paragraphs])
-            return article_text
-        else:
-            return 'Video content - No article body'
-    def convert_yyyy_mm_dd_to_datetime(date_str):
-        return datetime.strptime(date_str, "%Y-%m-%d")
+        try:
+            response = requests.get(url)
+            html_content = urllib.parse.unquote(response.text)
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Find all paragraphs within the specified div
+            article_body = soup.find('div', class_='ArticleBody-articleBody')
+            
+            # Extract text from paragraphs
+            if article_body:
+                paragraphs = article_body.find_all('p')
+                article_text = '\n'.join([para.get_text() for para in paragraphs])
+                return article_text
+        except:
+            return 'Failed to retrieve article content'
     # Apply content extraction to each article link
     df['Article content'] = df['Link'].apply(get_article_content)
-    df['Time'] = df['Date'].apply(convert_yyyy_mm_dd_to_datetime)
     return df
