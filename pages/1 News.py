@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 from utils.pipeline import load_or_scrape_file
 from utils.marketinsights import safe_literal_eval
-from xlsxwriter import Workbook
 from io import BytesIO
 
 def to_excel(cutoff_date):
@@ -27,7 +26,7 @@ def to_excel(cutoff_date):
     return processed_data
 
 st.set_page_config(  # Alternate names: setup_page, page, layout
-	layout="centered",  # Can be "centered" or "wide". In the future also "dashboard", etc.
+	layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
 	initial_sidebar_state="expanded",  # Can be "auto", "expanded", "collapsed"
 	page_title='News',  # String or None. Strings get appended with "• Streamlit". 
 	page_icon=None,  # String, anything supported by st.image, or None.
