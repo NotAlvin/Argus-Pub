@@ -5,6 +5,11 @@ import urllib
 from ast import literal_eval
 from datetime import datetime
 from io import BytesIO
+import re
+import unicodedata
+from transformers import AutoTokenizer, AutoModel
+import torch
+from scipy.spatial.distance import cosine
 
 def safe_literal_eval(x):
     """
@@ -28,42 +33,7 @@ def to_excel(df1, df2, df3):
     writer.close()
     processed_data = output.getvalue()
     return processed_data
-
-def get_country_mapping():
-    url = "https://www.countrycode.org"
-    response = requests.get(url)
-
-    # Parse the HTML content
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Find the table
-    table = soup.find('table')
-
-    # Extract the table headers
-    headers = []
-    for th in table.find_all('th'):
-        headers.append(th.text.strip())
-
-    # Extract the table rows
-    rows = []
-    for tr in table.find_all('tr'):
-        cells = tr.find_all('td')
-        row = [cell.text.strip() for cell in cells]
-        if row:
-            rows.append(row)
-
-    # Create a DataFrame
-    df = pd.DataFrame(rows, columns=headers)
-    return df
-
-def get_country(storage, mapping):
-    phone_number = safe_literal_eval(storage)['Phone Number']
-    extension = phone_number.split(' ')[0]
-    if '+' not in extension:
-        return 'Unknown'
-    else:
-        
-
+  
 def scrape_main_page_marketinsights():
     """
     Scrapes market insights from MarketScreener and extracts article content.
@@ -183,32 +153,31 @@ def scrape_tables(soup):
             pass
     return to_find
 
-def get_industry(soup):
+def get_industry(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+
     # Locate all card-header divs
     card_headers = soup.find_all('div', class_='card-header')
 
     # Iterate through each card-header div and extract the required information
     for card_header in card_headers:
-        try:
-            # Get the title text from the card-header div
-            title_text = card_header.get_text(strip=True)
-            if title_text == 'Sector':
-                # Find the next sibling card-content div
-                card_content = card_header.find_next_sibling('div', class_='card-content')
-                
-                if card_content:
-                    # Get the sector details from the card-content div
-                    sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
-                    actual = ''
-                    for sector in sector_details:
-                        if sector:
-                            actual = sector
-        except:
-            pass
-    return actual
+        # Get the title text from the card-header div
+        title_text = card_header.get_text(strip=True)
+        if title_text == 'Sector':
+            # Find the next sibling card-content div
+            card_content = card_header.find_next_sibling('div', class_='card-content')
+            
+            if card_content:
+                # Get the sector details from the card-content div
+                sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
+                for sector in sector_details:
+                    if sector:
+                        return sector
+    return 'Unknown'
 
-def get_contact_information(soup):
+def get_contact_information(html_content):
     result = {}
+    soup = BeautifulSoup(html_content, 'html.parser')
     # Find the div with class 'card-content'
     contact_info_div = soup.find_all('div', class_ = 'card mb-15')
     for div in contact_info_div:
@@ -234,6 +203,146 @@ def get_contact_information(soup):
         except:
             pass
     return result
+
+def get_phone_mapping():
+    url = "https://www.countrycode.org"
+    response = requests.get(url)
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the table
+    table = soup.find('table')
+
+    # Extract the table headers
+    headers = []
+    for th in table.find_all('th'):
+        headers.append(th.text.strip())
+
+    # Extract the table rows
+    rows = []
+    for tr in table.find_all('tr'):
+        cells = tr.find_all('td')
+        row = [cell.text.strip() for cell in cells]
+        if row:
+            rows.append(row)
+
+    # Create a DataFrame
+    df = pd.DataFrame(rows, columns=headers)[['COUNTRY', 'COUNTRY CODE']]
+
+    storage = {}
+    for i, row in df.iterrows():
+        if row['COUNTRY CODE'] not in storage.keys():
+            storage[row['COUNTRY CODE']] = {row['COUNTRY']}
+        else:
+            storage[row['COUNTRY CODE']].add(row['COUNTRY'])
+    return storage
+
+def label_country_by_phone(contact_information, storage):
+    country = {'Unknown'}
+    try:
+        phone_number = contact_information['Phone Number'].replace('-', ' ').replace('+', '').replace('(', '').replace(')', '')
+        extension = phone_number.split(' ')[0]
+        try:
+            country = storage[extension]
+        except:
+            try:
+                country = storage[f'1-{extension}']
+            except:
+                if extension:
+                    country = {'United States','Canada'}
+                else:
+                    country = {'Unknown'}
+    except:
+        country = {'Unknown'}
+    return country
+
+def remove_diacritics(input_str):
+    # Normalize the string to decompose diacritics
+    normalized_str = unicodedata.normalize('NFD', input_str)
+    
+    # Filter out the diacritic marks
+    non_diacritic_str = ''.join(
+        char for char in normalized_str if unicodedata.category(char) != 'Mn'
+    )
+    return non_diacritic_str
+
+def get_city_mapping():
+    cities = pd.read_csv('utils/data/Scrape/worldcities.csv')
+    city_storage = {}
+    city_storage['St. Peter Port'] = {'Guernsey'}
+    for i, row in cities.iterrows():
+        city = remove_diacritics(row['city'])
+        if city not in city_storage.keys():
+            city_storage[city] = {row['country']}
+        else:
+            city_storage[city].add(row['country'])
+    return city_storage
+
+def extract_city_names(lst):
+    for i in range(len(lst) - 1, -1, -1):
+        if re.search(r'\d', lst[i]):
+            if i + 1 < len(lst):
+                return ' '.join(lst[i+1:]).split(',')[-1].strip()
+
+def label_country_by_city(contact_information, city_storage):
+    country = {'Unknown'}
+    try:
+        temp = contact_information['Address Line 2'].split(' ')
+        city = extract_city_names(temp)
+        country = city_storage[city]
+    except:
+        country = {'Unknown'}
+    return country
+
+def get_intersection(a, b):
+    if a.intersection(b):
+        return a.intersection(b)
+    else:
+        if 'Unknown' in a:
+            if b:
+                if 'Unknown' in b:
+                    return 'Unknown'
+                else:
+                    return b
+            else:
+                return 'Unknown'
+        else:
+            if 'Unknown' in b:
+                return a
+            else:
+                c = a | b
+                return c
+
+# Function to get embeddings
+def get_embeddings(texts, tokenizer, model):
+    inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+    with torch.no_grad():
+        outputs = model(**inputs)
+    return outputs.last_hidden_state.mean(dim=1)
+
+# Function to find the most similar country
+def find_country(address, countries, tokenizer, model):
+    country_embeddings = get_embeddings(countries, tokenizer, model)
+    address_embedding = get_embeddings([address], tokenizer, model)
+    address_embedding = address_embedding.flatten() # Convert to 1-D array
+    similarities = [1 - cosine(address_embedding, country_embedding) for country_embedding in country_embeddings]
+    most_similar_country = countries[similarities.index(max(similarities))]
+    return most_similar_country
+
+def final_country(contact_information, candidates):
+    if candidates:
+        if len(candidates) == 1:
+            return list(candidates)[0]
+        else:
+            if contact_information:
+                temp = contact_information['Address Line 2'].split(' ')
+                city = extract_city_names(temp)
+                return find_country(city, list(candidates))
+            else:
+                return 'Unknown'
+    else:
+        return 'Unknown'
 
 # Add a 'Type' column to distinguish between Managers and Board members
 def process_temp_df(df):
@@ -284,42 +393,69 @@ def process_tables(data):
 
     return executive_list, shareholder_list
 
-def scrape_marketinsights():
-    country_mapping = get_country_mapping()
+# Function to convert time strings to datetime using the current date
+def convert_to_datetime(date_str):
+    formats = ['%I:%M%p', '%b. %d', '%Y-%m-%d']
+    current_year = datetime.now().year
+    for fmt in formats:
+        try:
+            # If the date string is in time format, assume it's from the current date
+            if fmt == '%I:%M%p':
+                return datetime.combine(datetime.today(), datetime.strptime(date_str, fmt).time())
+            elif fmt == '%b. %d':
+            # Append the current year to the date string
+                date_str_with_year = f"{date_str} {current_year}"
+                return datetime.strptime(date_str_with_year, f"{fmt} %Y")
+            else:
+                return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    # If none of the formats match, return None
+    return None
 
+def wrap_marketinsights_scraping_steps(tokenizer, model):
+    print('Scraping main page')
     df = scrape_main_page_marketinsights()
 
+    print('Scraping article HTML')
     df['raw'] = df['link'].apply(scrape_url)
+
+    print('Processing article HTML')
     df['Contact Info'] = df['raw'].apply(get_contact_information)
     df['Country'] = df['Contact Info']
-    df['Industry'] = df['raw'].apply(get_industry)
     df['tables'] = df['raw'].apply(scrape_tables)
     df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
 
     df_temp.columns = ['Executives', 'Shareholders']
     df = pd.concat([df, df_temp], axis = 1)
 
-    # Function to convert time strings to datetime using the current date
-    def convert_to_datetime(date_str):
-        formats = ['%I:%M%p', '%b. %d', '%Y-%m-%d']
-        current_year = datetime.now().year
-        for fmt in formats:
-            try:
-                # If the date string is in time format, assume it's from the current date
-                if fmt == '%I:%M%p':
-                    return datetime.combine(datetime.today(), datetime.strptime(date_str, fmt).time())
-                elif fmt == '%b. %d':
-                # Append the current year to the date string
-                    date_str_with_year = f"{date_str} {current_year}"
-                    return datetime.strptime(date_str_with_year, f"{fmt} %Y")
-                else:
-                    return datetime.strptime(date_str, fmt)
-            except ValueError:
-                pass
-        # If none of the formats match, return None
-        return None
+    print('Labelling Country and Industry')
+    phone_storage = get_phone_mapping()
+    city_storage = get_city_mapping()
+
+    df['Industry'] = df['raw'].apply(get_industry)
+    df['Contact Information'] = df['raw'].apply(get_contact_information)
+    df['Country_phone'] = df['Contact Information'].apply(lambda x: label_country_by_phone(x, phone_storage))
+    df['Country_city'] = df['Contact Information'].apply(lambda x: label_country_by_city(x, city_storage))
+    df['Country_candidates'] = df.apply(lambda x: get_intersection(x.Country_phone, x.Country_city, tokenizer, model), axis = 1)
+    df['Country'] = df.apply(lambda x: final_country(x['Contact Information'], x.Country_candidates), axis = 1)
 
     # Apply the conversion functions
     df['Time'] = df['date'].apply(convert_to_datetime)
     df.drop(['date'], axis = 1)
     return df
+
+def scrape_marketinsights():
+    model_name = 'nomic-ai/nomic-embed-text-v1'
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    return scrape_marketinsights(tokenizer, model)
+
+if __name__ == "__main__":
+    selection = 'marketinsights'
+    directory = "./utils/data/Scraped News/"
+    file_pattern = f"{selection}_data_*.csv"
+    df = scrape_marketinsights()
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    file_path = f"{directory}/{selection}_data_{current_date}.csv"
+    df.to_csv(file_path, index=False)
