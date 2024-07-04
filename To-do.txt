@@ -1,0 +1,4 @@
+1. Based on {list of countries}, use SERPAPI to pull recent {event} specific news, event = M&A
+2. Fix company selector for multiple tickers
+3. Scrape missing company information for those companies with small
+4. Add default country select for Chloe
