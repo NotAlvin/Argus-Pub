@@ -54,8 +54,10 @@ for source2 in ("CNBC", "Market Insights", "Stock Analysis"):
 unique_industries = pd.concat([df2['Industry'], df3['Industry']]).unique()
 unique_countries = pd.concat([df2['Country'], df3['Country']]).unique()
 
+default = {'Ireland', 'United Kingdom', 'Turkey', 'Portugal', 'Guernsey', 'Switzerland', 'Luxembourg', 'Monaco', 'Hong Kong', 'Singapore', 'Unknown'}
+
 selected_industries = st.sidebar.multiselect("Select Industry", ["All"] + list(unique_industries), default=["All"])
-selected_countries = st.sidebar.multiselect("Select Country", ["All"] + list(unique_countries), default=["All"])
+selected_countries = st.sidebar.multiselect("Select Country", ["All", "Default"] + list(unique_countries), default=["All"])
 
 def explode_col(col_name):
     if col_name != col_name:
@@ -69,8 +71,12 @@ if load_news_button:
         df2 = df2[df2['Industry'].isin(selected_industries)]
         df3 = df3[df3['Industry'].isin(selected_industries)]
     if "All" not in selected_countries:
-        df2 = df2[df2['Country'].isin(selected_countries)]
-        df3 = df3[df3['Country'].isin(selected_countries)]
+        if "Default" in selected_countries:
+            df2 = df2[df2['Country'].isin(set(selected_countries) | default)]
+            df3 = df3[df3['Country'].isin(set(selected_countries) | default)]
+        else:
+            df2 = df2[df2['Country'].isin(selected_countries)]
+            df3 = df3[df3['Country'].isin(selected_countries)]
 
     # Filter the DataFrame based on the selected number of days
     if source == 'CNBC':

@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def scrape_ticker_information(ticker):
-    ticker = ticker.split(',')[-1].strip()
+    ticker = ticker.split(',')[0].strip() #TODO: Implement a smart way
     # URL of the website
     url = f'https://stockanalysis.com/stocks/{ticker}/company/'
 

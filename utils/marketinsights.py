@@ -154,81 +154,94 @@ def scrape_tables(soup):
     return to_find
 
 def get_industry(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Locate all card-header divs
+        card_headers = soup.find_all('div', class_='card-header')
 
-    # Locate all card-header divs
-    card_headers = soup.find_all('div', class_='card-header')
-
-    # Iterate through each card-header div and extract the required information
-    for card_header in card_headers:
-        # Get the title text from the card-header div
-        title_text = card_header.get_text(strip=True)
-        if title_text == 'Sector':
-            # Find the next sibling card-content div
-            card_content = card_header.find_next_sibling('div', class_='card-content')
-            
-            if card_content:
-                # Get the sector details from the card-content div
-                sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
-                for sector in sector_details:
-                    if sector:
-                        return sector
-    return 'Unknown'
+        # Iterate through each card-header div and extract the required information
+        for card_header in card_headers:
+            # Get the title text from the card-header div
+            title_text = card_header.get_text(strip=True)
+            if title_text == 'Sector':
+                # Find the next sibling card-content div
+                card_content = card_header.find_next_sibling('div', class_='card-content')
+                
+                if card_content:
+                    # Get the sector details from the card-content div
+                    sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
+                    for sector in sector_details:
+                        if sector:
+                            return sector
+        return 'Unknown'
+    except:
+        return 'Unknown'
 
 def get_contact_information(html_content):
     result = {}
-    soup = BeautifulSoup(html_content, 'html.parser')
-    # Find the div with class 'card-content'
-    contact_info_div = soup.find_all('div', class_ = 'card mb-15')
-    for div in contact_info_div:
-        try:
-        # Extract the paragraphs within this div
-            contact_info_paragraphs = div.find_all('p', class_='m-0')
-            if contact_info_paragraphs:
-                
-                company_name = contact_info_paragraphs[0].text
-                address_line_1 = contact_info_paragraphs[1].text
-                address_line_2 = contact_info_paragraphs[2].text
-                phone_number = contact_info_paragraphs[3].text
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Find the div with class 'card-content'
+        contact_info_div = soup.find_all('div', class_ = 'card mb-15')
+        for div in contact_info_div:
+            try:
+            # Extract the paragraphs within this div
+                contact_info_paragraphs = div.find_all('p', class_='m-0')
+                if contact_info_paragraphs:
+                    
+                    company_name = contact_info_paragraphs[0].text
+                    address_line_1 = contact_info_paragraphs[1].text
+                    address_line_2 = contact_info_paragraphs[2].text
+                    phone_number = contact_info_paragraphs[3].text
 
-                # Extract the website URL
-                website = div.find('a', class_='m-0')['href']
+                    # Extract the website URL
+                    website = div.find('a', class_='m-0')['href']
 
-            # Print the extracted information
-            result['Company Name'] = company_name
-            result['Address Line 1'] = address_line_1
-            result['Address Line 2'] = address_line_2
-            result['Phone Number'] = phone_number
-            result['Website'] = website
-        except:
-            pass
-    return result
+                # Print the extracted information
+                result['Company Name'] = company_name
+                result['Address Line 1'] = address_line_1
+                result['Address Line 2'] = address_line_2
+                result['Phone Number'] = phone_number
+                result['Website'] = website
+            except:
+                pass
+        return result
+    except:
+        return result
 
-def get_phone_mapping():
-    url = "https://www.countrycode.org"
-    response = requests.get(url)
+def get_phone_mapping(existing):
+    if existing.empty:
+        url = "https://www.countrycode.org"
+        headerx = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+        }
+        response = requests.get(url, headers = headerx)
 
-    # Parse the HTML content
-    soup = BeautifulSoup(response.text, 'html.parser')
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Find the table
-    table = soup.find('table')
+        # Find the table
+        table = soup.find('table')
 
-    # Extract the table headers
-    headers = []
-    for th in table.find_all('th'):
-        headers.append(th.text.strip())
+        # Extract the table headers
+        headers = []
+        for th in table.find_all('th'):
+            headers.append(th.text.strip())
 
-    # Extract the table rows
-    rows = []
-    for tr in table.find_all('tr'):
-        cells = tr.find_all('td')
-        row = [cell.text.strip() for cell in cells]
-        if row:
-            rows.append(row)
+        # Extract the table rows
+        rows = []
+        for tr in table.find_all('tr'):
+            cells = tr.find_all('td')
+            row = [cell.text.strip() for cell in cells]
+            if row:
+                rows.append(row)
 
-    # Create a DataFrame
-    df = pd.DataFrame(rows, columns=headers)[['COUNTRY', 'COUNTRY CODE']]
+        # Create a DataFrame
+        df = pd.DataFrame(rows, columns=headers)[['COUNTRY', 'COUNTRY CODE']]
+        df.to_csv('utils/data/Scrape/worldcities.csv')
+    else:
+        df = existing
 
     storage = {}
     for i, row in df.iterrows():
@@ -330,7 +343,7 @@ def find_country(address, countries, tokenizer, model):
     most_similar_country = countries[similarities.index(max(similarities))]
     return most_similar_country
 
-def final_country(contact_information, candidates):
+def final_country(contact_information, candidates, tokenizer, model):
     if candidates:
         if len(candidates) == 1:
             return list(candidates)[0]
@@ -338,7 +351,7 @@ def final_country(contact_information, candidates):
             if contact_information:
                 temp = contact_information['Address Line 2'].split(' ')
                 city = extract_city_names(temp)
-                return find_country(city, list(candidates))
+                return find_country(city, list(candidates), tokenizer, model)
             else:
                 return 'Unknown'
     else:
@@ -416,10 +429,10 @@ def convert_to_datetime(date_str):
 def wrap_marketinsights_scraping_steps(tokenizer, model):
     print('Scraping main page')
     df = scrape_main_page_marketinsights()
-
+    df.to_csv('marketinsights1.csv')
     print('Scraping article HTML')
     df['raw'] = df['link'].apply(scrape_url)
-
+    df.to_csv('marketinsights2.csv')
     print('Processing article HTML')
     df['Contact Info'] = df['raw'].apply(get_contact_information)
     df['Country'] = df['Contact Info']
@@ -428,28 +441,33 @@ def wrap_marketinsights_scraping_steps(tokenizer, model):
 
     df_temp.columns = ['Executives', 'Shareholders']
     df = pd.concat([df, df_temp], axis = 1)
-
+    df.to_csv('marketinsights3.csv')
     print('Labelling Country and Industry')
-    phone_storage = get_phone_mapping()
+    try:
+        existing = pd.read_csv('utils/data/Scrape/phoneextensions.csv')
+    except:
+        existing = pd.DataFrame()
+    phone_storage = get_phone_mapping(existing)
     city_storage = get_city_mapping()
 
     df['Industry'] = df['raw'].apply(get_industry)
     df['Contact Information'] = df['raw'].apply(get_contact_information)
     df['Country_phone'] = df['Contact Information'].apply(lambda x: label_country_by_phone(x, phone_storage))
     df['Country_city'] = df['Contact Information'].apply(lambda x: label_country_by_city(x, city_storage))
-    df['Country_candidates'] = df.apply(lambda x: get_intersection(x.Country_phone, x.Country_city, tokenizer, model), axis = 1)
-    df['Country'] = df.apply(lambda x: final_country(x['Contact Information'], x.Country_candidates), axis = 1)
+    df['Country_candidates'] = df.apply(lambda x: get_intersection(x.Country_phone, x.Country_city), axis = 1)
+    df['Country'] = df.apply(lambda x: final_country(x['Contact Information'], x.Country_candidates, tokenizer, model), axis = 1)
 
     # Apply the conversion functions
     df['Time'] = df['date'].apply(convert_to_datetime)
     df.drop(['date'], axis = 1)
+    df.to_csv('marketinsights4.csv')
     return df
 
 def scrape_marketinsights():
     model_name = 'nomic-ai/nomic-embed-text-v1'
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
-    return scrape_marketinsights(tokenizer, model)
+    return wrap_marketinsights_scraping_steps(tokenizer, model)
 
 if __name__ == "__main__":
     selection = 'marketinsights'

@@ -1,7 +1,7 @@
 To do
 
-1. Based on {list of countries}, use SERPAPI to pull recent {event} specific news, event = M&A
-2. Fix company selector for multiple tickers
-3. Scrape missing company information for those companies with small
-4. Add default country select for Chloe
-5. Add timer for when to scrape, set on weekend to auto execute and then move the old files to archive
+1. Based on {list of countries}, use SERPAPI to pull recent {event} specific news, event = M&A - Refer to profile search
+2. Fix company selector for multiple tickers - Think of smart way to do it (embedding?)
+3. Scrape missing company information for those companies with their own websites - ???
+4. Add default country select for Chloe - Done
+5. Add timer for when to scrape, set on weekend to auto execute and then move the old files to archive - Not done
