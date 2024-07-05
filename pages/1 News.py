@@ -40,21 +40,21 @@ for source2 in ("CNBC", "Market Insights", "Stock Analysis"):
     if source2 == 'CNBC':
         df1 = load_or_scrape_file(source2.replace(' ', '').lower())
         df1['Time'] = pd.to_datetime(df1['Time'])
-        df1 = df1[df1['Time'] >= cutoff_date][['Time', 'Title', 'Article content']]
+        df1 = df1[df1['Time'] >= cutoff_date][['Time', 'Title', 'Article content', 'Link']]
     if source2 == 'Market Insights':
         df2 = load_or_scrape_file(source2.replace(' ', '').lower())
         df2['Time'] = pd.to_datetime(df2['Time'])
-        df2 = df2[df2['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'ticker', 'Executives', 'Shareholders', 'Country', 'Industry']]
+        df2 = df2[df2['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'ticker', 'Executives', 'Shareholders', 'Country', 'Industry', 'link']]
     if source2 == 'Stock Analysis':
         df3 = load_or_scrape_file(source2.replace(' ', '').lower())
         df3['Time'] = pd.to_datetime(df2['Time'])
-        df3 = df3[df3['Time'] >= cutoff_date][['Time', 'Title', 'Description', 'Tickers', 'Executives', 'Country', 'Industry']]
+        df3 = df3[df3['Time'] >= cutoff_date][['Time', 'Title', 'Description', 'Tickers', 'Executives', 'Country', 'Industry', 'Image URL']]
 # Filter dataframes
 # Get unique industries and countries from both dataframes
 unique_industries = pd.concat([df2['Industry'], df3['Industry']]).unique()
 unique_countries = pd.concat([df2['Country'], df3['Country']]).unique()
 
-default = {'Ireland', 'United Kingdom', 'Turkey', 'Portugal', 'Guernsey', 'Switzerland', 'Luxembourg', 'Monaco', 'Hong Kong', 'Singapore', 'Unknown'}
+default = {'Ireland', 'United Kingdom', 'Turkey', 'Sweden', 'Guernsey', 'Switzerland', 'Luxembourg', 'Monaco', 'Hong Kong', 'Singapore', 'Unknown'}
 
 selected_industries = st.sidebar.multiselect("Select Industry", ["All"] + list(unique_industries), default=["All"])
 selected_countries = st.sidebar.multiselect("Select Country", ["All", "Default"] + list(unique_countries), default=["All"])
