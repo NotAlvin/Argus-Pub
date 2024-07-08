@@ -47,7 +47,7 @@ for source2 in ("CNBC", "Market Insights", "Stock Analysis"):
         df2 = df2[df2['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'ticker', 'Executives', 'Shareholders', 'Country', 'Industry', 'link']]
     if source2 == 'Stock Analysis':
         df3 = load_or_scrape_file(source2.replace(' ', '').lower())
-        df3['Time'] = pd.to_datetime(df2['Time'])
+        df3['Time'] = pd.to_datetime(df3['Time'])
         df3 = df3[df3['Time'] >= cutoff_date][['Time', 'Title', 'Description', 'Tickers', 'Executives', 'Country', 'Industry', 'Image URL']]
 # Filter dataframes
 # Get unique industries and countries from both dataframes
