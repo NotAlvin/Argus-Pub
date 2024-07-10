@@ -1,6 +1,8 @@
 import streamlit as st
 from serpapi import GoogleSearch
+import pandas as pd
 import json
+from datetime import datetime
 
 # Opening JSON file
 with open(r'./utils/data/Scrape/google-countries.json') as f:
@@ -71,21 +73,33 @@ selected_time_range = st.sidebar.selectbox("Select Time Range", list(time_ranges
 if st.sidebar.button("Search"):
     time_range = time_ranges[selected_time_range]
     results = search_news(selected_countries, selected_categories, time_range, country_mapping)
-
-    for result in results:
-        # Display article info and thumbnail side by side
-        col1, col2 = st.columns([1, 5])
+    if results:
         
-        with col1:
-            if 'thumbnail' in result:
-                st.image(result['thumbnail'], use_column_width=True)
-        
-        with col2:
-            st.write(f"[{result['title']}]({result['link']})")
-            st.write(f"**Source:** {result['source']}")
-            st.write(f"**Date:** {result['date']}")
-            st.write(f"**Snippet:** {result['snippet']}")
-        
-        st.write("---")
+        for result in results:
+            # Display article info and thumbnail side by side
+            col1, col2 = st.columns([1, 5])
+            
+            with col1:
+                if 'thumbnail' in result:
+                    st.image(result['thumbnail'], use_column_width=True)
+            
+            with col2:
+                st.write(f"[{result['title']}]({result['link']})")
+                st.write(f"**Source:** {result['source']}")
+                st.write(f"**Date:** {result['date']}")
+                st.write(f"**Snippet:** {result['snippet']}")
+            
+            st.write("---")
+        # Download buttons
+        df = pd.DataFrame(results)
+        curr_date = datetime.today().strftime('%Y-%m-%d')
+        st.download_button(
+            label="Download data as CSV",
+            data=df,
+            file_name=f'news_results_{curr_date}.csv',
+            mime='text/csv'
+        )
+    else:
+        st.write('No results found for selected filters!')
 else:
     st.write("Search for news based on the filter in the sidebar to the left!")
