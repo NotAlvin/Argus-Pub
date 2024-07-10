@@ -2,16 +2,15 @@ import streamlit as st
 from serpapi import GoogleSearch
 import json
 
-# Opening JSON file 
-f = open(r'./utils/data/Scrape/google-countries.json') 
+# Opening JSON file
+with open(r'./utils/data/Scrape/google-countries.json') as f:
+    # returns JSON object as a dictionary
+    country_mapping_list = json.load(f)
 
-# returns JSON object as a dictionary 
-country_mapping_list = json.load(f)
-country_mapping = {}
-for item in country_mapping_list:
-    country_mapping[item['country_name']] = item['country_code']
+country_mapping = {item['country_name']: item['country_code'] for item in country_mapping_list}
 
-def search_news(selected_countries, selected_categories, country_mapping):
+
+def search_news(selected_countries, selected_categories, time_range, country_mapping):
     query = ' OR '.join(selected_categories)
     
     params = {
@@ -19,13 +18,14 @@ def search_news(selected_countries, selected_categories, country_mapping):
         "google_domain": "google.com",
         "tbm": "nws",  # Search only in news for timely information
         "num": 100,     # Number of results to fetch
+        "tbs": time_range,  # Time range for the search
         "api_key": st.secrets["serp_api_key"],
     }
 
     if "Guernsey" not in selected_countries:
-        params["gl"] = [country_mapping[item] for item in selected_countries]  # Set the country code for geolocation
+        params["gl"] = ','.join([country_mapping[item] for item in selected_countries if item in country_mapping])  # Set the country code for geolocation
     else:
-        query = ' OR '.join(selected_categories) + ' AND '.join(selected_countries)
+        query = ' OR '.join(selected_categories) + ' AND ' + ' OR '.join(selected_countries)
 
     search = GoogleSearch(params)
     results = search.get_dict()
@@ -55,11 +55,22 @@ categories = categories = {
     'Asset Sale'
 }
 
+time_ranges = {
+    'Any time': '',
+    'Past hour': 'qdr:h',
+    'Past 24 hours': 'qdr:d',
+    'Past week': 'qdr:w',
+    'Past month': 'qdr:m',
+    'Past year': 'qdr:y'
+}
+
 selected_countries = st.sidebar.multiselect("Select Country", list(countries), default=list(countries))
 selected_categories = st.sidebar.multiselect("Select Category", list(categories), default=list(categories))
+selected_time_range = st.sidebar.selectbox("Select Time Range", list(time_ranges.keys()), index=0)
 
 if st.sidebar.button("Search"):
-    results = search_news(selected_countries, selected_categories, country_mapping)
+    time_range = time_ranges[selected_time_range]
+    results = search_news(selected_countries, selected_categories, time_range, country_mapping)
 
     for result in results:
         # Display article info and thumbnail side by side
