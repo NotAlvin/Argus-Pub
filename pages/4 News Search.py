@@ -31,6 +31,7 @@ def search_news(selected_countries, selected_categories, time_range, country_map
 
     search = GoogleSearch(params)
     results = search.get_dict()
+    print(results)
     if "news_results" in results:
         return results["news_results"]
     else:
