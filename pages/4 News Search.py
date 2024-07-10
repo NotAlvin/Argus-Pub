@@ -4,6 +4,8 @@ import pandas as pd
 import json
 from datetime import datetime
 
+serp_api_key = st.secrets["serp_api_key"]
+
 # Opening JSON file
 with open(r'./utils/data/Scrape/google-countries.json') as f:
     # returns JSON object as a dictionary
@@ -16,22 +18,21 @@ def search_news(selected_countries, selected_categories, time_range, country_map
     query = ' OR '.join(selected_categories)
     
     params = {
-        "q": query,
         "google_domain": "google.com",
         "tbm": "nws",  # Search only in news for timely information
         "num": 100,     # Number of results to fetch
         "tbs": time_range,  # Time range for the search
-        "api_key": st.secrets["serp_api_key"],
+        "api_key": serp_api_key,
     }
 
     if "Guernsey" not in selected_countries:
         params["gl"] = ','.join([country_mapping[item] for item in selected_countries if item in country_mapping])  # Set the country code for geolocation
     else:
-        query = ' OR '.join(selected_categories) + ' AND ' + ' OR '.join(selected_countries)
-
+        query = f"({' OR '.join(selected_categories)}) ' AND ' ({' OR '.join(selected_countries)})"
+    params["q"] = query,
+    #print(params)
     search = GoogleSearch(params)
     results = search.get_dict()
-    print(results)
     if "news_results" in results:
         return results["news_results"]
     else:
@@ -75,7 +76,17 @@ if st.sidebar.button("Search"):
     time_range = time_ranges[selected_time_range]
     results = search_news(selected_countries, selected_categories, time_range, country_mapping)
     if results:
-        
+        # Download button
+        df = pd.DataFrame(results)
+        curr_date = datetime.today().strftime('%Y-%m-%d')
+        file = df.to_csv(index = False)
+        st.download_button(
+            label="Download data as CSV",
+            data=file,
+            file_name=f'news_results_{curr_date}.csv',
+            mime='text/csv'
+        )
+
         for result in results:
             # Display article info and thumbnail side by side
             col1, col2 = st.columns([1, 5])
@@ -85,21 +96,15 @@ if st.sidebar.button("Search"):
                     st.image(result['thumbnail'], use_column_width=True)
             
             with col2:
-                st.write(f"[{result['title']}]({result['link']})")
-                st.write(f"**Source:** {result['source']}")
+                title = result['title'].replace('$', '\$')
+                source = result['source'].replace('$', '\$')
+                snippet = result['snippet'].replace('$', '\$')
+                st.write(f"[{title}]({result['link']})")
+                st.write(f"**Source:** {source}")
                 st.write(f"**Date:** {result['date']}")
-                st.write(f"**Snippet:** {result['snippet']}")
+                st.write(f"**Snippet:** {snippet}")
             
             st.write("---")
-        # Download buttons
-        df = pd.DataFrame(results)
-        curr_date = datetime.today().strftime('%Y-%m-%d')
-        st.download_button(
-            label="Download data as CSV",
-            data=df,
-            file_name=f'news_results_{curr_date}.csv',
-            mime='text/csv'
-        )
     else:
         st.write('No results found for selected filters!')
 else:
