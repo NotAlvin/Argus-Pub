@@ -31,7 +31,6 @@ def search_person(person_name, company_name=None):
         }
         search = GoogleSearch(params)
         results = search.get_dict()
-        print(results)
         return results
 
 st.title("Profile Searcher 👤")
