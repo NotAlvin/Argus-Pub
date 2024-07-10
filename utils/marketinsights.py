@@ -434,13 +434,11 @@ def wrap_marketinsights_scraping_steps(tokenizer, model):
     df['raw'] = df['link'].apply(scrape_url)
     df.to_csv('marketinsights2.csv')
     print('Processing article HTML')
-    df['Contact Info'] = df['raw'].apply(get_contact_information)
-    df['Country'] = df['Contact Info']
     df['tables'] = df['raw'].apply(scrape_tables)
     df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
 
     df_temp.columns = ['Executives', 'Shareholders']
-    df = pd.concat([df, df_temp], axis = 1)
+    df['Executives', 'Shareholders'] = df_temp
     df.to_csv('marketinsights3.csv')
     print('Labelling Country and Industry')
     try:
