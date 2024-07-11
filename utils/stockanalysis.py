@@ -8,9 +8,13 @@ def scrape_ticker_information(ticker):
     # URL of the website
     url = f'https://stockanalysis.com/stocks/{ticker}/company/'
 
+    headerx = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+        }
     # Send a GET request to the URL
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers = headerx)
         response.raise_for_status()  # Raise an exception if the request was unsuccessful
         # Parse the HTML content of the page with BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
