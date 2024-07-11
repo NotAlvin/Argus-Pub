@@ -56,8 +56,10 @@ def scrape_cnbc():
             title = title_tag.text
             link = title_tag['href']
             image = image_tag['src']
-            
-            if 'hours ago' in date_str:
+            if 'min ago' in date_str:
+                source = f"{date_str} - CNBC News"
+                date = datetime.now() - timedelta(minutes=int(date_str.split()[0]))
+            elif 'hours ago' in date_str:
                 source = f"{date_str} - CNBC News"
                 date = datetime.now() - timedelta(hours=int(date_str.split()[0]))
             else:

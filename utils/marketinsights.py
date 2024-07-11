@@ -428,26 +428,32 @@ def convert_to_datetime(date_str):
 
 def wrap_marketinsights_scraping_steps(tokenizer, model):
     print('Scraping main page')
-    df = scrape_main_page_marketinsights()
-    df.to_csv('marketinsights1.csv')
-    print('Scraping article HTML')
-    df['raw'] = df['link'].apply(scrape_url)
-    df.to_csv('marketinsights2.csv')
-    print('Processing article HTML')
-    df['tables'] = df['raw'].apply(scrape_tables)
-    df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
 
+    df = scrape_main_page_marketinsights()
+
+    print('Scraping article HTML')
+
+    df['raw'] = df['link'].apply(scrape_url)
+
+    print('Processing article HTML')
+
+    df['tables'] = df['raw'].apply(scrape_tables)
+    
+    df.to_csv('utils/data/Scraped News/temp_marketinsights.csv')
+
+    df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
     df_temp.columns = ['Executives', 'Shareholders']
-    df['Executives', 'Shareholders'] = df_temp
-    df.to_csv('marketinsights3.csv')
+    print(df_temp.head())
+    df[['Executives', 'Shareholders']] = df_temp
+
     print('Labelling Country and Industry')
+
     try:
         existing = pd.read_csv('utils/data/Scrape/phoneextensions.csv')
     except:
         existing = pd.DataFrame()
     phone_storage = get_phone_mapping(existing)
     city_storage = get_city_mapping()
-
     df['Industry'] = df['raw'].apply(get_industry)
     df['Contact Information'] = df['raw'].apply(get_contact_information)
     df['Country_phone'] = df['Contact Information'].apply(lambda x: label_country_by_phone(x, phone_storage))

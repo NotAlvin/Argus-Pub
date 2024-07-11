@@ -30,7 +30,7 @@ st.write("---")
 
 st.sidebar.header("Filter News")
 max_days = st.sidebar.slider("Select how many past days of news to display:", 1, 7, 7)
-cutoff_date = datetime.now() - timedelta(days=max_days)
+cutoff_date = datetime.now() - timedelta(days=max_days + 7) #Temporary measure to display more news until scheduler is up
 
 load_news_button = st.sidebar.button("Load News")
 source = st.sidebar.radio("Choose a news source", ("CNBC", "Market Insights", "Stock Analysis"))
