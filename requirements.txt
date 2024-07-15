@@ -133,5 +133,4 @@ wcwidth==0.2.13
 webcolors==24.6.0
 webencodings==0.5.1
 websocket-client==1.8.0
-XlsxWriter @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_f5o3d40w7y/croot/xlsxwriter_1685021151073/work
 zipp==3.19.2
