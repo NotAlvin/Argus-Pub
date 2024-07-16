@@ -25,6 +25,20 @@ class NewsArticle:
     URL to an image of the news article.
     No restrictions on the format of the image.
     """
+    
+    def to_dict(self):
+        return {
+            "publication_date": self.publication_date.strftime('%Y-%m-%d'),
+            "title": self.title,
+            "link": self.link,
+            "content": self.content,
+            "summary": self.summary,
+            "source": self.source,
+            "sentiment": self.sentiment,
+            "keywords": self.keywords,
+            "categories": self.categories,
+            "image": self.image
+        }
 
 @dataclass
 class SearchQuery:
