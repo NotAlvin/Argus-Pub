@@ -1,5 +1,5 @@
 from utils.news_api_template import NewsArticle, SearchQuery
-from utils.news_api_utils import check_query, get_query_id, get_sentiment_score, get_summary, get_image_from_link, save_articles_to_json
+from utils.news_api_utils import check_query, get_query_id, get_sentiment_score, get_summary, get_bloomberg_article, get_image_from_link, save_articles_to_json
 from datetime import datetime
 from typing import List
 import concurrent.futures
@@ -38,6 +38,11 @@ def fetch_articles_for_company(company: str, query: SearchQuery) -> List[NewsArt
                 sentiment = get_sentiment_score(content)
                 image = get_image_from_link(link)
 
+                if title == "Bloomberg - Are you a robot?":
+                    title, content = get_bloomberg_article(link)
+                    summary = get_summary(content)
+                    sentiment = get_sentiment_score(content)
+
                 articles.append(NewsArticle(
                     publication_date=publication_date,
                     title=title,
@@ -71,7 +76,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
 
 # For testing
 if __name__ == "__main__":
-    names = ["JD Health", "Mengniu Dairy", "New World Development Co Ltd", "Foyle Food Group"]
+    names = ["New World Development Co Ltd"]
     query = SearchQuery(names=names, language='en', since=datetime(2024, 1, 1))
     articles = get_articles(query)
     save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(names)}_articles.json")

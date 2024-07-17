@@ -92,7 +92,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]: #TODO: If many compan
 #For testing
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
-    names = ["Mengniu Dairy", "Foyle Food Group"]
+    names = ["New World Development Co Ltd"]
     query = SearchQuery(names=names, language='en', since=datetime(2024, 1, 1))
     articles = get_articles(query)
     save_articles_to_json(articles, f"{'_'.join(names)}_articles.json")

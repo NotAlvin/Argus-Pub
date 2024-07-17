@@ -185,6 +185,29 @@ def get_sentiment_score(article_content: str) -> float:
     score = mean[0].item() - mean[1].item()
     return score
 
+def get_bloomberg_article(link: str):
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.54'
+    }
+    try:
+        response = requests.get(link, headers=headers, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        title_tag = soup.find('title')
+        title = title_tag.get_text(strip=True) if title_tag else "No title found"
+        # Extract the content
+        content = []
+        for paragraph in soup.select('p[class^="media"]'):
+            content.append(paragraph.get_text(strip=False))
+        content_text = "\n".join(content) if content else "No content found"
+
+        return title, content_text
+
+    except Exception as e:
+        print(f"Error fetching content from {link}: {e}")
+        return None, None
+
 def get_image_from_link(link: str) -> str:
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.54'}
 
