@@ -40,80 +40,82 @@ summary_model_name = "facebook/bart-large-cnn"
 summary_tokenizer = BartTokenizer.from_pretrained(summary_model_name)
 summary_model = BartForConditionalGeneration.from_pretrained(summary_model_name)
 
-def get_summary(text):
+def get_summary(article_content: str) -> str:
     # Tokenize and summarize the input text using BART
-    inputs = summary_tokenizer.encode("summarize: " + text, return_tensors="pt", max_length=1024, truncation=True)
+    inputs = summary_tokenizer.encode("summarize: " + article_content, return_tensors="pt", max_length=1024, truncation=True)
     summary_ids = summary_model.generate(inputs, max_length=100, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
     # Decode and output the summary
     summary = summary_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     return summary
 
-def get_sentiment_score(article_content: str) -> float:
-    '''
-    Trying out sentiment scoring for article content
-    '''
-    # initialize our model and tokenizer
-    tokenizer = BertTokenizer.from_pretrained('ProsusAI/finbert')
-    model = BertForSequenceClassification.from_pretrained('ProsusAI/finbert')
+# initialize pre-trained BERT model and tokenizer
+sentiment_tokenizer = BertTokenizer.from_pretrained('ProsusAI/finbert')
+sentiment_model = BertForSequenceClassification.from_pretrained('ProsusAI/finbert')
 
-    tokens = tokenizer.encode_plus(article_content, add_special_tokens=False)
+def get_sentiment_score(article_content: str) -> float:
+    tokens = sentiment_tokenizer.encode_plus(article_content, add_special_tokens=False)
     input_ids = tokens['input_ids']
     attention_mask = tokens['attention_mask']
-    # define our starting position (0) and window size (number of tokens in each chunk)
-    start = 0
-    window_size = 512
     
-    # initialize probabilities list
-    probs_list = []
-    # initialize weight of chunks
-    chunk_weights = []
-
     start = 0
-    window_size = 510  # we take 2 off here so that we can fit in our [CLS] and [SEP] tokens
+    window_size = 510  # Adjust window size to fit [CLS] and [SEP] tokens
     total_len = len(input_ids)
     loop = True
+    
+    probs_list = []
+    chunk_weights = []
+    
     while loop:
         end = start + window_size
         if end >= total_len:
             loop = False
             end = total_len
-        # (1) extract window from input_ids and attention_mask
-        input_ids_chunk = input_ids[start:end]
-        attention_mask_chunk = attention_mask[start:end]
-        # (2) add [CLS] and [SEP]
-        input_ids_chunk = [101] + input_ids_chunk + [102]
-        attention_mask_chunk = [1] + attention_mask_chunk + [1]
-        # (3) add padding upto window_size + 2 (512) tokens
+        
+        # Extract chunk and add [CLS] and [SEP]
+        input_ids_chunk = [101] + input_ids[start:end] + [102]
+        attention_mask_chunk = [1] + attention_mask[start:end] + [1]
+        
+        # Pad to window_size + 2
         input_ids_chunk += [0] * (window_size - len(input_ids_chunk) + 2)
         attention_mask_chunk += [0] * (window_size - len(attention_mask_chunk) + 2)
-        # (4) format into PyTorch tensors dictionary
+        
+        # Create input dictionary for model
         input_dict = {
             'input_ids': torch.Tensor([input_ids_chunk]).long(),
             'attention_mask': torch.Tensor([attention_mask_chunk]).int()
         }
-        # (5) make logits prediction
-        outputs = model(**input_dict)
-        # (6) calculate softmax and append to list
+        
+        # Get model outputs
+        outputs = sentiment_model(**input_dict)
+        
+        # Calculate probabilities and append to list
         probs = torch.nn.functional.softmax(outputs[0], dim=-1)
         probs_list.append(probs)
+        
         chunk_weight = end - start
+        chunk_weights.append(chunk_weight)
+        
         start = end
+    
+    # Stack probabilities
     stacks = torch.stack(probs_list)
-    chunk_weights = torch.Tensor([window_size] * len(probs_list)).resize_(4, 1)
-    chunk_weights[-1] = chunk_weight
+    
+    # Create and normalize chunk_weights tensor
+    chunk_weights = torch.Tensor(chunk_weights).unsqueeze(1)
     chunk_weights = chunk_weights / chunk_weights.sum()
+    
     with torch.no_grad():
-        # we must include our stacks operation in here too
-        stacks = torch.stack(probs_list)
-        # now resize
-        stacks = stacks.resize_(stacks.shape[0], stacks.shape[2])
-        # finally, we can calculate the mean value for each sentiment class
-        # mean = stacks.mean(dim=0)
-        chunk_weights = chunk_weights
-        mean = (chunk_weights*stacks).sum(dim=0)
+        # Ensure stacks is in correct shape
+        stacks = stacks.squeeze(1)  # Assuming outputs[0] has shape [batch_size, num_classes]
+        
+        # Calculate weighted mean
+        mean = (chunk_weights * stacks).sum(dim=0)
+    
+    # Determine sentiment class
     winner = torch.argmax(mean).item()
     result = ['Positive', 'Negative', 'Neutral'][winner]
-    # Converting to a score in [-1,1]
+    
+    # Convert to score in [-1, 1]
     score = mean[0].item() - mean[1].item()
     return score
 

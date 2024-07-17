@@ -3,6 +3,8 @@ from utils.news_api_utils import check_query, get_query_id, get_sentiment_score,
 from datetime import datetime
 from typing import List
 
+import warnings
+
 def get_articles(query: SearchQuery) -> List[NewsArticle]:
     articles = []
     for company in query.names:
@@ -47,13 +49,14 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
             else:
                 for article_data in result.get("articles", []):
                     article_info = article_data["article"]
-                    publication_date = datetime.strptime(article_info["published"], '%Y-%m-%d')
+
+                    publication_date = datetime.strptime(article_info["published"], '%Y-%m-%d') # Direct map
                     title = article_info["title"] # Direct map
                     link = article_info["url"] # Direct map
                     content = article_info["text"]  # Direct map
                     summary = get_summary(content)
                     source = article_info["source"] # Direct map
-                    sentiment = get_sentiment_score(content)  ## TODO: Use a sentiment model
+                    sentiment = get_sentiment_score(content)
                     keywords = [] ## TODO: ???
                     categories = []  ## TODO: Can get from type?
                     image = None  ## TODO: We need to extract this from somewhere
@@ -73,6 +76,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
     return articles
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
     query = SearchQuery(names=["Rosewood Hotels"], language='en', since=datetime(2023, 1, 1))
     articles = get_articles(query)
     save_articles_to_json(articles, 'rosewood_hotels_articles.json')
