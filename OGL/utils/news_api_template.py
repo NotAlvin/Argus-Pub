@@ -3,7 +3,7 @@ from datetime import datetime
 
 @dataclass
 class NewsArticle:
-    publication_date: datetime
+    publication_date: datetime | None
     title: str
     link: str
     """url"""
@@ -28,7 +28,7 @@ class NewsArticle:
     
     def to_dict(self):
         return {
-            "publication_date": self.publication_date.strftime('%Y-%m-%d'),
+            "publication_date": str(self.publication_date),
             "title": self.title,
             "link": self.link,
             "content": self.content,

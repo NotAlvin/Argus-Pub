@@ -77,8 +77,8 @@ def check_query(id: str):
     }
 
     start_time = time.time()
-    timeout = 6 * 60  # 6 minutes in seconds
-
+    timeout = 7 * 60  # 7 minutes in seconds
+    time.sleep(10)
     while True:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
@@ -88,16 +88,16 @@ def check_query(id: str):
             if status == "completed":
                 return response.json()
             else:
-                print('Query still queued, waiting for 2 minutes...')
-                time.sleep(120)  # Wait for 2 minutes
+                print('Query still queued, waiting for ~2 minutes...')
+                time.sleep(100)  # Wait for 100 seconds
         else:
-            print('Query still queued, waiting for 2 minutes...')
-            time.sleep(120)  # Wait for 2 minutes
+            print('Query still queued, waiting for ~2 minutes...')
+            time.sleep(100)  # Wait for 100 seconds
 
         # Check if the timeout has been exceeded
         if time.time() - start_time > timeout:
-            print('Error: Query not completed within 6 minutes')
-            return {'error': 'Query not completed within 6 minutes'}
+            print('Error: Query not completed within 7 minutes')
+            return {'error': 'Query not completed within 7 minutes'}
 
 
 # Load pre-trained BART model and tokenizer
@@ -176,9 +176,9 @@ def get_sentiment_score(article_content: str) -> float:
         # Calculate weighted mean
         mean = (chunk_weights * stacks).sum(dim=0)
     
-    # Determine sentiment class
-    winner = torch.argmax(mean).item()
-    result = ['Positive', 'Negative', 'Neutral'][winner]
+    # Determine sentiment class - Not needed
+    #winner = torch.argmax(mean).item()
+    #result = ['Positive', 'Negative', 'Neutral'][winner]
     
     # Convert to score in [-1, 1]
     score = mean[0].item() - mean[1].item()
