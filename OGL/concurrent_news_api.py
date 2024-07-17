@@ -71,7 +71,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
 
 # For testing
 if __name__ == "__main__":
-    names = ["Rosewood Hotels", "New World Development Co Ltd", "Foyle Food Group"]
+    names = ["JD Health", "Mengniu Dairy", "New World Development Co Ltd", "Foyle Food Group"]
     query = SearchQuery(names=names, language='en', since=datetime(2024, 1, 1))
     articles = get_articles(query)
     save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(names)}_articles.json")
