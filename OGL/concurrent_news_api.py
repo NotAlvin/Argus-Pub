@@ -1,5 +1,5 @@
 from utils.news_api_template import NewsArticle, SearchQuery
-from utils.news_api_utils import check_query, get_query_id, get_sentiment_score, get_summary, save_articles_to_json
+from utils.news_api_utils import check_query, get_query_id, get_sentiment_score, get_summary, get_image_from_link, save_articles_to_json
 from datetime import datetime
 from typing import List
 import concurrent.futures
@@ -36,6 +36,7 @@ def fetch_articles_for_company(company: str, query: SearchQuery) -> List[NewsArt
                 summary = article_info.get("summary", get_summary(content))
                 source = article_info["source"]
                 sentiment = get_sentiment_score(content)
+                image = get_image_from_link(link)
 
                 articles.append(NewsArticle(
                     publication_date=publication_date,
@@ -47,7 +48,7 @@ def fetch_articles_for_company(company: str, query: SearchQuery) -> List[NewsArt
                     sentiment=sentiment,
                     keywords=[],  # TODO: Check with LEDR
                     categories=[],  # TODO: Check with LEDR
-                    image=None  # TODO: Extract this from somewhere
+                    image=image  # TODO: Extract this from somewhere
                 ))
 
         return articles
@@ -70,7 +71,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
 
 # For testing
 if __name__ == "__main__":
-    names = ["Foyle Food Group"]
+    names = ["Rosewood Hotels", "New World Development Co Ltd", "Foyle Food Group"]
     query = SearchQuery(names=names, language='en', since=datetime(2024, 1, 1))
     articles = get_articles(query)
     save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(names)}_articles.json")

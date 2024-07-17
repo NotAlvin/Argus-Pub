@@ -8,6 +8,7 @@ from utils.news_api_template import NewsArticle
 import time
 import os
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
 
 
 # Define the path for the JSON storage file
@@ -183,6 +184,23 @@ def get_sentiment_score(article_content: str) -> float:
     # Convert to score in [-1, 1]
     score = mean[0].item() - mean[1].item()
     return score
+
+def get_image_from_link(link: str) -> str:
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.54'}
+
+    try:
+        response = requests.get(link, headers = headers, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        og_image = soup.find('meta', property='og:image')
+        if og_image and og_image['content']:
+            return og_image['content']
+        img = soup.find('img')
+        if img and img['src']:
+            return img['src']
+    except Exception as e:
+        print(f"Error fetching image from {link}: {e}")
+    return None
 
 
 def save_articles_to_json(articles: List[NewsArticle], filename: str):
