@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 
 # Define the path for the JSON storage file
-SEARCH_HISTORY_FILE = 'search_history.json'
+SEARCH_HISTORY_FILE = 'OGL/utils/search_history.json'
 
 def load_search_history():
     if os.path.exists(SEARCH_HISTORY_FILE):
