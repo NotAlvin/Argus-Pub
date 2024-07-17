@@ -1,38 +1,103 @@
 import requests
 import streamlit as st
+import torch
 from transformers import BartTokenizer, BartForConditionalGeneration, BertForSequenceClassification, BertTokenizer
 import json
 from typing import List
 from utils.news_api_template import NewsArticle
-import torch
+import time
+import os
+from datetime import datetime, timedelta
 
 
-def check_query(id):
+# Define the path for the JSON storage file
+SEARCH_HISTORY_FILE = 'search_history.json'
+
+def load_search_history():
+    if os.path.exists(SEARCH_HISTORY_FILE):
+        with open(SEARCH_HISTORY_FILE, 'r') as file:
+            return json.load(file)
+    return {}
+
+def save_search_history(search_history):
+    with open(SEARCH_HISTORY_FILE, 'w') as file:
+        json.dump(search_history, file, indent=4)
+
+def get_query_id(query: str):
+    search_history = load_search_history()
+    current_time = datetime.now()
+
+    # Check if the query exists in the search history and if it was searched within the last month
+    if query in search_history:
+        query_data = search_history[query]
+        last_searched = datetime.strptime(query_data['timestamp'], '%Y-%m-%d %H:%M:%S')
+        
+        if current_time - last_searched < timedelta(days=30):
+            print('Using cached query ID')
+            return query_data['query_id']
+
+    # If the query is not found or is older than a month, make a new API request
+    url = 'https://app.backend.inriskable.com/api/rest/search'
+    api_key = st.secrets['inriskable_api_key']  # Replace with your actual API key
+    headers = {
+        'accept': 'application/json',
+        'x-api-key': api_key,
+        'Content-Type': 'application/json'
+    }
+
+    data = {
+        "entity_name_en": query,
+        "entity_type": "company"
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+    
+    if response.status_code == 201:
+        query_id = response.json()['data']['id']
+        
+        # Update the search history with the new query ID and timestamp
+        search_history[query] = {
+            'query_id': query_id,
+            'timestamp': current_time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        save_search_history(search_history)
+        
+        return query_id
+    else:
+        print('Failed to retrieve query ID')
+        return None
+
+def check_query(id: str):
     url = f'https://app.backend.inriskable.com/api/rest/search?id={id}'
     api_key = st.secrets['inriskable_api_key']
     headers = {
         'accept': 'application/json',
         'x-api-key': api_key
     }
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
 
-    if response.status_code == 200:
-        if response.json()['data']['status'] == "completed":
-            return response.json()
+    start_time = time.time()
+    timeout = 6 * 60  # 6 minutes in seconds
+
+    while True:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        if response.status_code == 200:
+            status = response.json()['data']['status']
+            if status == "completed":
+                return response.json()
+            else:
+                print('Query still queued, waiting for 2 minutes...')
+                time.sleep(120)  # Wait for 2 minutes
         else:
-            print('Query still queued')
-            return {}
-    else:
-        print('Query still queued')
-        return {}
+            print('Query still queued, waiting for 2 minutes...')
+            time.sleep(120)  # Wait for 2 minutes
 
-def get_query_id(query): #TODO Actually code it
-    if query == "Rosewood Hotels":
-        query_id = "clyo0y4rw00ey5rpu64j3ead5" #Rosewood Hotels
-    else:
-        query_id = "clynzuhek005y5rpux8pdwxyt" #Sonia Cheng
-    return query_id
+        # Check if the timeout has been exceeded
+        if time.time() - start_time > timeout:
+            print('Error: Query not completed within 6 minutes')
+            return {'error': 'Query not completed within 6 minutes'}
 
 
 # Load pre-trained BART model and tokenizer
