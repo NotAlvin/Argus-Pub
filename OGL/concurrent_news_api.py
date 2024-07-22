@@ -1,8 +1,15 @@
-from utils.news_api_template import NewsArticle, SearchQuery
-from utils.news_api_utils import convert_to_datetime, check_query, get_query_id, get_sentiment_score, get_summary, get_bloomberg_article, get_image_from_link, save_articles_to_json
 from datetime import datetime
-from typing import List
+import time
 import concurrent.futures
+from typing import List
+import json
+import random
+
+from utils.news_api_template import NewsArticle, SearchQuery
+from utils.news_api_utils import (
+    convert_to_datetime, check_query, get_query_id, get_sentiment_score,
+    get_summary, get_bloomberg_article, get_image_from_link, save_articles_to_json
+)
 
 def fetch_articles_for_entity(entity: str, query: SearchQuery) -> List[NewsArticle]:
     articles = []
@@ -16,6 +23,7 @@ def fetch_articles_for_entity(entity: str, query: SearchQuery) -> List[NewsArtic
     else:
         print(f"Unexpected error with {entity} - No articles will be returned")
         return []
+    print(f"Searching for {entity} of type {entity_type}")
     id = get_query_id(entity, entity_type)
     print(f"{entity} of type {entity_type} query id is: {id}")
 
@@ -60,16 +68,24 @@ def fetch_articles_for_entity(entity: str, query: SearchQuery) -> List[NewsArtic
                     sentiment=sentiment,
                     keywords=[],  # TODO: Check with LEDR
                     categories=[],  # TODO: Check with LEDR
-                    image=image  # TODO: Extract this from somewhere
+                    image=image
                 ))
 
         return articles
 
+def fetch_articles_with_delay(entity: str, query: SearchQuery, delay: float) -> List[NewsArticle]:
+    time.sleep(delay) # Needed to add this because Inriskable endpoint has issues with concurrent sending of POST requests
+    return fetch_articles_for_entity(entity, query)
+
 def get_articles(query: SearchQuery) -> List[NewsArticle]:
     articles = []
-    
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = {executor.submit(fetch_articles_for_entity, entity, query): entity for entity in query.names + query.companies}
+    delay_between_requests = 0.5  # Delay of 0.5 seconds
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(fetch_articles_with_delay, entity, query, i * delay_between_requests): entity
+            for i, entity in enumerate(query.names + query.companies)
+        }
 
         for future in concurrent.futures.as_completed(futures):
             entity = futures[future]
@@ -78,23 +94,17 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
                 articles.extend(result_articles)
             except Exception as e:
                 print(f"Error fetching articles for {entity}: {e}")
-
     return articles
 
 # For testing
 if __name__ == "__main__":
-    '''
-    {"names": ["Abdulla Ghurair"], 
-                  "companies": ["Mashreqbank", "Mashreq Bank", "Abdulla Al Ghurair Foundation", "Mashreq Group", "Abdulla Al Ghurair Foundation (agf)", "Abdullah Al Ghurair Education Foundation", "Abdulla Al Ghurair Foundation For Education", "Al Ghurair Investment"], 
-                  "language": "en", 
-                  "since": "None"}
-    { "names": ["马云", "馬雲"], "companies": ["阿里巴巴（中国）", "网络技术有限公司"], "language": "zh-cn", "since": "None"}
-{ "names": ["黄峥", "Colin Huang", "黃崢"], "companies": ["拼多多"], "language": "zh-cn", "since": "None"}
-    
-    '''
-    #test_query = { "names": ["梁紹鴻", "梁紹鴻"], "companies": ["大鴻輝興業有限公司"], "language": "zh-tw", "since": "None"}
-    #test_query = { "names": ["梁紹鴻"], "companies": [], "language": "zh-tw", "since": "None"}
-    test_query = { "names": ["Patrick Tsang"], "companies": ["DeFiance Media", "Long An & Lam LLP", "Block T Ventures", "Tsangs Group", "Vale International Group plc", "UNIFY PLATFORM AG", "fuboTV", "Anode", "hmv Digital China Group (8078.HK)", "Grenada", "Aquavit London", "Son of a Barista", "TG Venture Acquisition Corp", "Hong Kong Ambassadors Club", "Westminster Group plc", "Global Angels Ltd"], "language": "en", "since": "None"}
+    json_file_path = 'OGL/utils/test_cases.json'  # Replace with your actual file path
+
+    with open(json_file_path, 'r') as file:
+        data = [json.loads(line) for line in file]
+
+    # Step 2: Randomly select a dictionary from the list
+    test_query = random.choice(data)
     query = SearchQuery(names=test_query['names'],
                         companies=test_query['companies'],
                         language=test_query['language'],
@@ -105,5 +115,7 @@ if __name__ == "__main__":
     try:
         save_articles_to_json(articles, f"OGL/examples_articles/{file_name}_articles.json")
     except:
-        save_articles_to_json(articles, f"OGL/examples_articles/{test_query['names']}_articles.json")
-    
+        try:
+            save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(test_query['names'])}_articles.json")
+        except:
+            save_articles_to_json(articles, f"OGL/examples_articles/last_searched_articles.json")

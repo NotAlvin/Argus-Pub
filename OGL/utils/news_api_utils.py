@@ -1,15 +1,19 @@
+import os
+import json
+import time
+from datetime import datetime, timedelta
+from collections import defaultdict
+from typing import List
+
 import requests
+from bs4 import BeautifulSoup
+from langdetect import detect, DetectorFactory
 import streamlit as st
 import torch
 from transformers import BartTokenizer, BartForConditionalGeneration, BertForSequenceClassification, BertTokenizer
-import json
-from typing import List
+
 from utils.news_api_template import NewsArticle
-import time
-import os
-from datetime import datetime, timedelta
-from bs4 import BeautifulSoup
-from langdetect import detect, DetectorFactory
+
 
 # Ensures consistent results for language detection
 DetectorFactory.seed = 0
@@ -75,9 +79,9 @@ def get_query_id(query: str, entity_type: str):
             "entity_name_zh": query,
             "entity_type": entity_type
         }
-
-    response = requests.post(url, headers=headers, json=data)
     print(f"Attempted to send POST request with {headers}, {data}")
+    response = requests.post(url, headers=headers, json=data)
+
     if response.status_code == 201:
         query_id = response.json()['data']['id']
         
@@ -259,8 +263,27 @@ def get_image_from_link(link: str) -> str:
         print(f"Error fetching image from {link}: {e}")
     return None
 
+def process_articles(articles: List[NewsArticle]) -> List[dict]:
+    article_dict = defaultdict(lambda: {'count': 0, 'data': {}})
+
+    for article in articles:
+        title = article.title
+        article_data = article.to_dict()
+        if title in article_dict:
+            article_dict[title]['count'] += 1
+        else:
+            article_dict[title]['data'] = article_data
+            article_dict[title]['count'] = 1
+
+    unique_articles = []
+    for article in article_dict.values():
+        article_data = article['data']
+        article_data['count'] = article['count']
+        unique_articles.append(article_data)
+
+    return unique_articles
 
 def save_articles_to_json(articles: List[NewsArticle], filename: str):
-    articles_data = [article.to_dict() for article in articles]
+    unique_articles_with_count = process_articles(articles)
     with open(filename, 'w') as f:
-        json.dump(articles_data, f, indent=4)
+        json.dump(unique_articles_with_count, f, indent=4)

@@ -1,4 +1,3 @@
-English examples:
 { "names": ["Abdulla Ghurair"], "companies": ["Mashreqbank", "Mashreq Bank", "Abdulla Al Ghurair Foundation", "Mashreq Group", "Abdulla Al Ghurair Foundation (agf)", "Abdullah Al Ghurair Education Foundation", "Abdulla Al Ghurair Foundation For Education", "Al Ghurair Investment"], "language": "en", "since": "None"}
 { "names": ["Adrian Cheng"], "companies": ["Chow Tai Fook", "K11 Art Foundation", "New World Development Company Limited", "K11 Concepts Limited", "CTF Education Group"], "language": "en", "since": "None"}
 { "names": ["Bernard Ecclestone Charles"], "companies": ["Gstaad 3000", "Formula One", "Formula One Group", "Formula One Management Ltd", "F1 Hq"], "language": "en", "since": "None"}
@@ -14,11 +13,9 @@ English examples:
 { "names": ["Patrick Tsang"], "companies": ["DeFiance Media", "Long An & Lam LLP", "Block T Ventures", "Tsangs Group", "Vale International Group plc", "UNIFY PLATFORM AG", "fuboTV", "Anode", "hmv Digital China Group (8078.HK)", "Grenada", "Aquavit London", "Son of a Barista", "TG Venture Acquisition Corp", "Hong Kong Ambassadors Club", "Westminster Group plc", "Global Angels Ltd"], "language": "en", "since": "None"}
 { "names": ["Xiting Li"], "companies": ["Mindray"], "language": "en", "since": "None"}
 { "names": ["Yiming Ng"], "companies": ["Tribe", "Tribe Accelerator", "Stackup And Tribe", "Tribe"], "language": "en", "since": "None"}
-Chinese examples:
 { "names": ["马云", "馬雲"], "companies": ["阿里巴巴（中国）网络技术有限公司"], "language": "zh-cn", "since": "None"}
 { "names": ["黄峥", "Colin Huang", "黃崢"], "companies": ["拼多多"], "language": "zh-cn", "since": "None"}
 { "names": ["刘强东", "劉強東"], "companies": ["京东集团 JD Group", "京东", "Jingdong"], "language": "zh-tw", "since": "None"}
 { "names": ["钟睒睒", "鐘睒睒"], "companies": ["农夫山泉"], "language": "zh-cn", "since": "None"}
-
 { "names": ["梁紹鴻", "梁紹鴻"], "companies": ["大鴻輝興業有限公司"], "language": "zh-tw", "since": "None"}
 { "names": ["郭台銘"], "companies": ["富士康"], "language": "zh-tw", "since": "None"}
