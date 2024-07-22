@@ -1,4 +1,20 @@
 TODO LIST:
+- Need to load profiles error (could be a waiting thing)
+    Error fetching articles for fuboTV: Need to load profiles.
+    Error fetching articles for Grenada: Need to load profiles.
+    Error fetching articles for Aquavit London: Need to load profiles.
+    Error fetching articles for TG Venture Acquisition Corp: Need to load profiles.
+    Error fetching articles for Son of a Barista: Need to load profiles.
+    Error fetching articles for Hong Kong Ambassadors Club: Need to load profiles.
+    Error fetching articles for DeFiance Media: Need to load profiles.
+    Error fetching articles for Patrick Tsang: Need to load profiles.
+    Error fetching articles for Westminster Group plc: Need to load profiles.
+    Error fetching articles for Global Angels Ltd: Need to load profiles.
+    Error fetching articles for Block T Ventures: Need to load profiles.
+    Error fetching articles for Tsangs Group: Need to load profiles.
+    Error fetching articles for Vale International Group plc: Need to load profiles.
+    Error fetching articles for UNIFY PLATFORM AG: Need to load profiles.
+    Error fetching articles for Anode: Need to load profiles.
 
 - Test names and companies provided, save results
 

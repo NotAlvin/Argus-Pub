@@ -1,7 +1,0 @@
-To do
-1. Scrape missing company information for those companies with their own websites - Doing in argus_test
-2. Add in sentiment score -> Experimenting as well in argus_test
-
-OGL 2 things
-set up database
-write script to pipe asian news to OGL

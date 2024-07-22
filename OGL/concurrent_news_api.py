@@ -94,10 +94,16 @@ if __name__ == "__main__":
     '''
     #test_query = { "names": ["梁紹鴻", "梁紹鴻"], "companies": ["大鴻輝興業有限公司"], "language": "zh-tw", "since": "None"}
     #test_query = { "names": ["梁紹鴻"], "companies": [], "language": "zh-tw", "since": "None"}
+    test_query = { "names": ["Patrick Tsang"], "companies": ["DeFiance Media", "Long An & Lam LLP", "Block T Ventures", "Tsangs Group", "Vale International Group plc", "UNIFY PLATFORM AG", "fuboTV", "Anode", "hmv Digital China Group (8078.HK)", "Grenada", "Aquavit London", "Son of a Barista", "TG Venture Acquisition Corp", "Hong Kong Ambassadors Club", "Westminster Group plc", "Global Angels Ltd"], "language": "en", "since": "None"}
     query = SearchQuery(names=test_query['names'],
                         companies=test_query['companies'],
                         language=test_query['language'],
                         since=convert_to_datetime(test_query['since']))
     articles = get_articles(query)
     print("Articles collated, saving to json")
-    save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(test_query['names'].extend(test_query['companies']))}_articles.json")
+    file_name = '_'.join(test_query['names'] + test_query['companies'])
+    try:
+        save_articles_to_json(articles, f"OGL/examples_articles/{file_name}_articles.json")
+    except:
+        save_articles_to_json(articles, f"OGL/examples_articles/{test_query['names']}_articles.json")
+    
