@@ -43,6 +43,8 @@ class NewsArticle:
 @dataclass
 class SearchQuery:
     names: list[str]
+    """Known names of the prospect. There may be multiple, eg ['Dwayne Johnson', 'The Rock']"""
+    companies: list[str]
     """Known companies the prospect is associated with"""
     language: str
     """

@@ -9,7 +9,10 @@ import time
 import os
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from langdetect import detect, DetectorFactory
 
+# Ensures consistent results for language detection
+DetectorFactory.seed = 0
 
 # Define the path for the JSON storage file
 SEARCH_HISTORY_FILE = 'OGL/utils/search_history.json'
@@ -24,7 +27,13 @@ def save_search_history(search_history):
     with open(SEARCH_HISTORY_FILE, 'w') as file:
         json.dump(search_history, file, indent=4)
 
-def get_query_id(query: str):
+def convert_to_datetime(date_string, date_format='%Y-%m-%d'):
+    try:
+        return datetime.strptime(date_string, date_format)
+    except (ValueError, TypeError):
+        return None
+
+def get_query_id(query: str, entity_type: str):
     search_history = load_search_history()
     current_time = datetime.now()
 
@@ -46,14 +55,29 @@ def get_query_id(query: str):
         'Content-Type': 'application/json'
     }
 
-    data = {
-        "entity_name_en": query,
-        "entity_type": "company"
-    }
+    #Check type of the name being entered - Either English or Chinese characters
+    lang = detect(query)
+    print(f'Language detected for name {query} is {lang}')
+
+    if lang == 'en':
+        data = {
+            "entity_name_en": query,
+            "entity_type": entity_type
+        }
+    elif lang == 'zh-cn' or lang == 'zh-tw':
+        data = {
+            "entity_name_cn": query,
+            "entity_type": entity_type
+        }
+    else: #If unsure just submit for both
+        data = {
+            "entity_name_en": query,
+            "entity_name_cn": query,
+            "entity_type": entity_type
+        }
 
     response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-    
+    print(response)
     if response.status_code == 201:
         query_id = response.json()['data']['id']
         
@@ -66,7 +90,7 @@ def get_query_id(query: str):
         
         return query_id
     else:
-        print('Failed to retrieve query ID')
+        print(f'Failed to retrieve query ID, error code: {response.status_code}')
         return None
 
 def check_query(id: str):
@@ -115,8 +139,8 @@ def get_summary(article_content: str) -> str:
     return summary
 
 # initialize pre-trained BERT model and tokenizer
-sentiment_tokenizer = BertTokenizer.from_pretrained('ProsusAI/finbert')
-sentiment_model = BertForSequenceClassification.from_pretrained('ProsusAI/finbert')
+sentiment_tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+sentiment_model = BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased')
 
 def get_sentiment_score(article_content: str) -> float:
     tokens = sentiment_tokenizer.encode_plus(article_content, add_special_tokens=False)
