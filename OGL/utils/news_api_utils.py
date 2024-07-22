@@ -131,7 +131,7 @@ en_summary_tokenizer = BartTokenizer.from_pretrained(en_summary_model_name)
 en_summary_model = BartForConditionalGeneration.from_pretrained(en_summary_model_name)
 
 zh_summary_model_name = "fnlp/bart-large-chinese"
-zh_summary_tokenizer = BartTokenizer.from_pretrained(zh_summary_model_name)
+zh_summary_tokenizer = BertTokenizer.from_pretrained(zh_summary_model_name)
 zh_summary_model = BartForConditionalGeneration.from_pretrained(zh_summary_model_name)
 
 def get_summary(article_content: str, lang: str) -> str:

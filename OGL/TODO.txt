@@ -1,2 +1,45 @@
-1. Test names and companies provided, save results
-2. EDA based on tests -> Yanis send over articles with their sentiment scores
+TODO LIST:
+
+- Test names and companies provided, save results
+
+    Write script to queue test cases, count number of names and let Inriskable know (reply email) so they increase count of tokens
+
+- EDA based on tests -> Yanis send over articles with their sentiment scores
+    Types of EDA to check on
+        Timing (how long does it take to process)
+            Article summary and sentiment tagging
+        Will we get rate limited if we keep pinging the news server
+        How many articles per entity at different time steps (also how many no time step)
+    Ping Yanis for examples when stuff is fixed
+    Start on EDA script for existing pull
+        Distribution of sentiment scores
+
+- Deduplication of articles
+
+    Inriskable said that they do topical deduplication on their backend, so we just need to count repeats in the case where individual/company returns exact same articles
+    Check with LEDR on this
+
+- Isolate repository and write documentation
+
+    Wrap up and send to LEDR (Yay!)
+    
+
+DONE LIST:
+
+- Incorporate individuals search
+    Done - Extended existing function to work for individuals, switch entity type based on whether name exists in individual or company list 
+
+- Add in Chinese search functionality
+    Done - Check language of name and send request accordingly -> If name is in non-detected language just try sending both (Should work based on how Inriskable does search)
+    Now that Chinese articles returned need to add new models for summary and sentiment scoring -> Refer to testing in TODO above
+
+- Fix 422 Bug
+    Example
+    Error fetching articles for 梁紹鴻: Need to load profiles.
+    Error fetching articles for 大鴻輝興業有限公司: Need to load profiles.
+    Language detected for name 梁紹鴻 is ko 
+    <Response [422]>
+    Failed to retrieve query ID, error code: 422
+    梁紹鴻 of type individual query id is: None
+
+    Fixed -> Request body had issues

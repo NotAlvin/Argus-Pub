@@ -3,7 +3,6 @@ from utils.news_api_utils import convert_to_datetime, check_query, get_query_id,
 from datetime import datetime
 from typing import List
 import concurrent.futures
-import warnings
 
 def fetch_articles_for_entity(entity: str, query: SearchQuery) -> List[NewsArticle]:
     articles = []
@@ -94,11 +93,11 @@ if __name__ == "__main__":
     
     '''
     #test_query = { "names": ["梁紹鴻", "梁紹鴻"], "companies": ["大鴻輝興業有限公司"], "language": "zh-tw", "since": "None"}
-    test_query = { "names": ["梁紹鴻"], "companies": [], "language": "zh-tw", "since": "None"}
+    #test_query = { "names": ["梁紹鴻"], "companies": [], "language": "zh-tw", "since": "None"}
     query = SearchQuery(names=test_query['names'],
                         companies=test_query['companies'],
                         language=test_query['language'],
                         since=convert_to_datetime(test_query['since']))
     articles = get_articles(query)
     print("Articles collated, saving to json")
-    save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(test_query['names'])}_articles.json")
+    save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(test_query['names'].extend(test_query['companies']))}_articles.json")
