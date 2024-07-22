@@ -1,0 +1,2 @@
+1. Test names and companies provided, save results
+2. EDA based on tests -> Yanis send over articles with their sentiment scores

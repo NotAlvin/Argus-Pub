@@ -41,14 +41,14 @@ def fetch_articles_for_entity(entity: str, query: SearchQuery) -> List[NewsArtic
                 title = article_info["title"]
                 link = article_info["url"]
                 content = article_info["text"]
-                summary = article_info.get("summary", get_summary(content))
+                summary = article_info.get("summary", get_summary(content, result_lang[-2:])) # en or zh
                 source = article_info["source"]
                 sentiment = get_sentiment_score(content)
                 image = get_image_from_link(link)
 
                 if title == "Bloomberg - Are you a robot?":
                     title, content = get_bloomberg_article(link)
-                    summary = get_summary(content)
+                    summary = get_summary(content, result_lang[-2:])
                     sentiment = get_sentiment_score(content)
 
                 articles.append(NewsArticle(
@@ -93,7 +93,8 @@ if __name__ == "__main__":
 { "names": ["黄峥", "Colin Huang", "黃崢"], "companies": ["拼多多"], "language": "zh-cn", "since": "None"}
     
     '''
-    test_query = { "names": ["黄峥", "黃崢"], "companies": [], "language": "zh-cn", "since": "None"}
+    #test_query = { "names": ["梁紹鴻", "梁紹鴻"], "companies": ["大鴻輝興業有限公司"], "language": "zh-tw", "since": "None"}
+    test_query = { "names": ["梁紹鴻"], "companies": [], "language": "zh-tw", "since": "None"}
     query = SearchQuery(names=test_query['names'],
                         companies=test_query['companies'],
                         language=test_query['language'],

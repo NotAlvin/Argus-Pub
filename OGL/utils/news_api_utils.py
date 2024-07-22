@@ -64,20 +64,20 @@ def get_query_id(query: str, entity_type: str):
             "entity_name_en": query,
             "entity_type": entity_type
         }
-    elif lang == 'zh-cn' or lang == 'zh-tw':
+    elif lang == 'zh-cn' or lang == 'zh-tw' or lang == 'ko': # Quirk of langdetect that tends to classify Chinese names as Korean
         data = {
-            "entity_name_cn": query,
+            "entity_name_zh": query,
             "entity_type": entity_type
         }
     else: #If unsure just submit for both
         data = {
             "entity_name_en": query,
-            "entity_name_cn": query,
+            "entity_name_zh": query,
             "entity_type": entity_type
         }
 
     response = requests.post(url, headers=headers, json=data)
-    print(response)
+    print(f"Attempted to send POST request with {headers}, {data}")
     if response.status_code == 201:
         query_id = response.json()['data']['id']
         
@@ -103,7 +103,7 @@ def check_query(id: str):
 
     start_time = time.time()
     timeout = 7 * 60  # 7 minutes in seconds
-    time.sleep(10)
+    time.sleep(60) # Give Inriskable time to fetch results
     while True:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
@@ -113,11 +113,11 @@ def check_query(id: str):
             if status == "completed":
                 return response.json()
             else:
-                print('Query still queued, waiting for ~2 minutes...')
-                time.sleep(100)  # Wait for 100 seconds
+                print(f'Query {id} still queued, waiting for 90s...')
+                time.sleep(90)  # Wait for 90 seconds
         else:
-            print('Query still queued, waiting for ~2 minutes...')
-            time.sleep(100)  # Wait for 100 seconds
+            print('Query still queued, waiting for 90s...')
+            time.sleep(90)  # Wait for 90 seconds
 
         # Check if the timeout has been exceeded
         if time.time() - start_time > timeout:
@@ -126,16 +126,26 @@ def check_query(id: str):
 
 
 # Load pre-trained BART model and tokenizer
-summary_model_name = "facebook/bart-large-cnn"
-summary_tokenizer = BartTokenizer.from_pretrained(summary_model_name)
-summary_model = BartForConditionalGeneration.from_pretrained(summary_model_name)
+en_summary_model_name = "facebook/bart-large-cnn"
+en_summary_tokenizer = BartTokenizer.from_pretrained(en_summary_model_name)
+en_summary_model = BartForConditionalGeneration.from_pretrained(en_summary_model_name)
 
-def get_summary(article_content: str) -> str:
-    # Tokenize and summarize the input text using BART
-    inputs = summary_tokenizer.encode("summarize: " + article_content, return_tensors="pt", max_length=1024, truncation=True)
-    summary_ids = summary_model.generate(inputs, max_length=100, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
-    # Decode and output the summary
-    summary = summary_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+zh_summary_model_name = "fnlp/bart-large-chinese"
+zh_summary_tokenizer = BartTokenizer.from_pretrained(zh_summary_model_name)
+zh_summary_model = BartForConditionalGeneration.from_pretrained(zh_summary_model_name)
+
+def get_summary(article_content: str, lang: str) -> str:
+    # Tokenize and summarize the input text using BART - Model chosen based on language
+    if lang == 'en':
+        inputs = en_summary_tokenizer.encode("summarize: " + article_content, return_tensors="pt", max_length=1024, truncation=True)
+        summary_ids = en_summary_model.generate(inputs, max_length=100, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
+        # Decode and output the summary
+        summary = en_summary_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    else:
+        inputs = zh_summary_tokenizer.encode("summarize: " + article_content, return_tensors="pt", max_length=1024, truncation=True)
+        summary_ids = zh_summary_model.generate(inputs, max_length=100, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
+        # Decode and output the summary
+        summary = zh_summary_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     return summary
 
 # initialize pre-trained BERT model and tokenizer
