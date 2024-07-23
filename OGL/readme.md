@@ -19,7 +19,7 @@ This API connector fetches news articles related to specified entities (names an
 ```mermaid
 graph LR
     A[Input: SearchQuery] --> B[Get Entity ID]
-    B --> C[fetch_articles_for_entity]
+    B --> C[Check status of Query]
     C --> D[Check Query Results]
     D --> E[Process Articles]
     E --> F[Save Articles]
@@ -50,6 +50,7 @@ graph LR
 - **Things to take note of**: 
   - Handling of API rate limits, timeout management all have not yet been fully optimized.
   - We can collect statistics on how long it takes Inriskable to return results to minimize the number of API calls required while reducing the waiting time.
+  - Currently if many articles are 
 
 ### Step 3: Process Articles
 
