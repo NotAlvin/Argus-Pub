@@ -50,7 +50,8 @@ graph LR
 - **Things to take note of**: 
   - Handling of API rate limits, timeout management all have not yet been fully optimized.
   - We can collect statistics on how long it takes Inriskable to return results to minimize the number of API calls required while reducing the waiting time.
-  - Currently if many articles are 
+  - Currently if many articles are processed sometimes Python kills the thread due to memory running out. This might be something to take note of.
+  - One possible optimization would be to write to a json as the articles are processed then overwrite the article so as to not keep the articles in memory. Subsequently the json can be read from and used to reconstruct the full list.
 
 ### Step 3: Process Articles
 

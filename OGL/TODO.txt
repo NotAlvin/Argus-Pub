@@ -18,12 +18,6 @@ TODO LIST:
     Inriskable said that they do topical deduplication on their backend, so we just need to count repeats in the case where individual/company returns exact same articles
     Check with LEDR on this
 
-- Isolate repository and write documentation
-    What I plan on including:
-        1. Information flow diagram
-        2. What processing gets done at each step
-        3. Function documentation - What to look out for/what considerations for each function
-        4. requirements.txt
     Wrap up and send to LEDR (Yay!)
     
 
@@ -64,4 +58,11 @@ DONE LIST:
     Error fetching articles for UNIFY PLATFORM AG: Need to load profiles.
     Error fetching articles for Anode: Need to load profiles.
 
-    Fixed -> Add delay before sending POST request
+    Fixed -> Add delay before sending POST requests
+
+- Isolate repository and write documentation
+    What I plan on including:
+        1. Information flow diagram
+        2. What processing gets done at each step
+        3. Function documentation - What to look out for/what considerations for each function
+        4. requirements.txt
