@@ -1,14 +1,15 @@
-
-%title Inriskable API data connector documentation
-%author Alvin Leung (BJB Global Innovation Lab)
-%date today
-
-
 # Inriskable API Connector README
 
 ---
 
+Title: Inriskable API data connector documentation
+Author: Alvin Leung (BJB Global Innovation Lab)
+Date: 22nd July 2024
+
+---
+
 ## Overview
+
 This API connector fetches news articles related to specified entities (names and companies) using the Inriskable API. It processes the fetched articles to include details like summaries, sentiment scores, and associated images. The results are then saved in a structured JSON format according to the template classes provided by LEDR.
 
 ---
@@ -17,8 +18,8 @@ This API connector fetches news articles related to specified entities (names an
 
 ```mermaid
 graph LR
-    A[Input: SearchQuery] --> B[fetch_articles_for_entity]
-    B --> C[Get Entity ID]
+    A[Input: SearchQuery] --> B[Get Entity ID]
+    B --> C[fetch_articles_for_entity]
     C --> D[Check Query Results]
     D --> E[Process Articles]
     E --> F[Save Articles]
@@ -128,6 +129,7 @@ graph LR
   - This is based on the assumption that articles with identical titles are likely to be the same or very similar.
 
 #### **Function**: `save_articles_to_json`
+
 - **Description**: Saves the processed list of articles to a JSON file.
 - **Logic**:
   - Calls `process_articles` to deduplicate and structure the list of articles.
@@ -141,19 +143,19 @@ graph LR
 
 ---
 
-## Function Documentation
+## Individual Function Documentation
 
 ### Main File
 
 #### `fetch_articles_for_entity`
-- **Purpose**: Fetches articles related to a specific entity.
+
 - **Parameters**:
   - `entity` (str): The name of the entity (name or company).
   - `query` (SearchQuery): The search query parameters.
 - **Returns**: List of `NewsArticle` objects.
 
 #### `fetch_articles_with_delay`
-- **Purpose**: Fetches articles for an entity with a delay to manage API rate limits.
+
 - **Parameters**:
   - `entity` (str): The name of the entity (name or company).
   - `query` (SearchQuery): The search query parameters.
@@ -161,7 +163,7 @@ graph LR
 - **Returns**: List of `NewsArticle` objects.
 
 #### `get_articles`
-- **Purpose**: Fetches articles for all entities specified in the query.
+
 - **Parameters**:
   - `query` (SearchQuery): The search query parameters.
 - **Returns**: List of `NewsArticle` objects.
@@ -171,51 +173,52 @@ graph LR
 ### Utils File
 
 #### `get_query_id`
-- **Purpose**: Gets the unique ID for an entity from the Inriskable API.
+
 - **Parameters**:
   - `query` (str): The name of the entity.
   - `entity_type` (str): The type of entity (name or company).
 - **Returns**: The unique ID for the entity.
 
 #### `check_query`
-- **Purpose**: Checks the status of the query and fetches the results.
+
 - **Parameters**:
   - `id` (str): The unique ID of the query.
 - **Returns**: The query results as a dictionary.
 
 #### `get_summary`
-- **Purpose**: Generates a summary for the article content.
+
 - **Parameters**:
   - `article_content` (str): The content of the article.
   - `lang` (str): The language of the article ('en' or 'zh').
 - **Returns**: The summary of the article.
 
 #### `get_sentiment_score`
-- **Purpose**: Calculates the sentiment score for the article content.
+
 - **Parameters**:
   - `article_content` (str): The content of the article.
+  - `lang` (str): The language of the article ('en' or 'zh').
 - **Returns**: The sentiment score as a float.
 
 #### `get_bloomberg_article`
-- **Purpose**: Fetches the title and content of a Bloomberg article.
+
 - **Parameters**:
   - `link` (str): The URL of the Bloomberg article.
 - **Returns**: The title and content of the article.
 
 #### `get_image_from_link`
-- **Purpose**: Fetches the image URL from the article link.
+
 - **Parameters**:
   - `link` (str): The URL of the article.
 - **Returns**: The image URL as a string.
 
 #### `process_articles`
-- **Purpose**: Processes and deduplicates articles.
+
 - **Parameters**:
   - `articles` (List[NewsArticle]): The list of articles to process.
 - **Returns**: List of dictionaries containing unique articles.
 
 #### `save_articles_to_json`
-- **Purpose**: Saves the processed articles to a JSON file.
+
 - **Parameters**:
   - `articles` (List[NewsArticle]): The list of articles to save.
   - `filename` (str): The name of the JSON file.
@@ -226,6 +229,7 @@ graph LR
 ### Template File
 
 #### `NewsArticle`
+
 - **Attributes**:
   - `publication_date` (datetime | None): The publication date of the article.
   - `title` (str): The title of the article.
@@ -241,8 +245,58 @@ graph LR
   - `to_dict`: Converts the `NewsArticle` object to a dictionary. This method was added to support the saving of results and is not required for the get_articles function to run.
 
 #### `SearchQuery`
+
 - **Attributes**:
   - `names` (list[str]): The names of the entities.
   - `companies` (list[str]): The companies associated with the entities.
   - `language` (str): The language of the articles.
   - `since` (datetime | None): The date since when to fetch the articles.
+
+---
+
+## Running the Python File
+
+### Setting Up the Environment
+
+- **Create a new conda environment:**
+
+    ```bash
+    conda create --name inriskable python=3.11 -y
+    ```
+
+- **Activate the conda environment:**
+
+    ```bash
+    conda activate inriskable
+    ```
+
+### Running the Function on the Test Set
+
+- **Execute the Python script:**
+
+    ```bash
+    pip install -r requirements.txt
+    python concurrent_news_api.py
+    ```
+
+### Creating `requirements.txt` and Installing Packages
+
+This section is just to document how I created the requirements.txt file, since the file has already been created there is no need to run these commands.
+
+1. **Install `pipreqs` to generate `requirements.txt`:**
+
+    ```bash
+    conda install pipreqs -y
+    ```
+
+2. **Generate `requirements.txt` with `pipreqs`:**
+
+    ```bash
+    pipreqs --force
+    ```
+
+3. **Install packages listed in `requirements.txt`:**
+
+    ```bash
+    while read requirement; do conda install --yes $requirement; done < requirements.txt
+    ```
