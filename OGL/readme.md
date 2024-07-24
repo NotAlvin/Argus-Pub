@@ -115,7 +115,6 @@ graph LR
   - Not all image URLs are valid and accessible.
   - Rate limits and delays for API calls might have to be built in to avoid being throttled or blocked.
 
-
 ### Step 4: Save Articles
 
 #### **Function**: `process_articles`
@@ -140,7 +139,6 @@ graph LR
 - **Things to Take Note Of**:
   - **File Path Management**: Ensure that the file path provided is valid and accessible. Handle cases where the directory might not exist or where there are permission issues.
   - **Error Handling**: Implement robust error handling to catch and report issues that might arise during file writing, such as permission errors or invalid file paths.
-  - **Data Formatting**: Ensure that the JSON output is well-formatted for readability and consistency. Use the `indent` parameter of `json.dump` to create a readable format.
   - **Backup and Overwrite**: Consider scenarios where the file might already exist. Implement logic to handle file overwriting or create backups if necessary.
 
 ---
