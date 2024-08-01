@@ -1,8 +1,4 @@
 TODO LIST:
-- Test names and companies provided, save results
-
-    Write script to queue test cases, count number of names and let Inriskable know (reply email) so they increase count of tokens
-
 - EDA based on tests -> Yanis send over articles with their sentiment scores
     Types of EDA to check on
         Timing (how long does it take to process)
@@ -66,3 +62,10 @@ DONE LIST:
         2. What processing gets done at each step
         3. Function documentation - What to look out for/what considerations for each function
         4. requirements.txt
+
+- Test names and companies provided, save results
+    Write script to queue test cases, count number of names and let Inriskable know (reply email) so they increase count of tokens
+
+- Fix the image link fetcher
+    If the html missing https -> append
+    If the homepage is cutoff -> get host and append

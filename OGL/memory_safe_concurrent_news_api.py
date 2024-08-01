@@ -149,13 +149,13 @@ if __name__ == "__main__":
     combined_file_name = '_'.join(test_query['names'] + test_query['companies']) + "_articles_combined.json"
     combined_articles = [article for articles in articles_by_entity.values() for article in articles]
     try:
-        with open(f"OGL/examples_articles/{combined_file_name}", 'w', encoding='utf-8') as f:
+        with open(f"./examples_articles/{combined_file_name}", 'w', encoding='utf-8') as f:
             json.dump([article.__dict__ for article in combined_articles], f, ensure_ascii=False, indent=4)
     except:
         try:
             fallback_file_name = '_'.join(test_query['names']) + "_articles_combined.json"
-            with open(f"OGL/examples_articles/{fallback_file_name}", 'w', encoding='utf-8') as f:
+            with open(f"./examples_articles/{fallback_file_name}", 'w', encoding='utf-8') as f:
                 json.dump([article.__dict__ for article in combined_articles], f, ensure_ascii=False, indent=4)
         except:
-            with open(f"OGL/examples_articles/last_searched_articles_combined.json", 'w', encoding='utf-8') as f:
+            with open(f"./examples_articles/last_searched_articles_combined.json", 'w', encoding='utf-8') as f:
                 json.dump([article.__dict__ for article in combined_articles], f, ensure_ascii=False, indent=4)

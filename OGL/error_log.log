@@ -3,3 +3,12 @@ ERROR:root:Error fetching articles for Tribe Accelerator: No secrets files found
 ERROR:root:Error fetching articles for Yiming Ng: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
 ERROR:root:Error fetching articles for Tribe: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
 ERROR:root:Error fetching articles for Tribe: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
+ERROR:root:Error fetching articles for 黄峥: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
+ERROR:root:Error fetching articles for 黃崢: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
+ERROR:root:Error fetching articles for 拼多多: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
+ERROR:root:Error fetching articles for Colin Huang: No secrets files found. Valid paths for a secrets.toml file are: /Users/launchpad/.streamlit/secrets.toml, /Users/launchpad/workspace/services/Argus/OGL/.streamlit/secrets.toml
+ERROR:root:Error fetching articles for Mekey Hsu Chen: Need to load profiles.
+ERROR:root:Error fetching articles for 徐福记: Need to load profiles.
+ERROR:root:Error fetching articles for Hsu Fu Chi: [Errno 2] No such file or directory: 'OGL/utils/search_history.json'
+ERROR:root:Error fetching articles for Mindray: Need to load profiles.
+ERROR:root:Error fetching articles for Xiting Li: Object of type datetime is not JSON serializable

@@ -44,7 +44,7 @@ for source2 in ("CNBC", "Market Insights", "Stock Analysis"):
     if source2 == 'Market Insights':
         df2 = load_or_scrape_file(source2.replace(' ', '').lower())
         df2['Time'] = pd.to_datetime(df2['Time'])
-        df2 = df2[df2['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'ticker', 'Executives', 'Shareholders', 'Country', 'Industry', 'link']]
+        df2 = df2[df2['Time'] >= cutoff_date][['Time', 'title', 'Article content', 'ticker', 'People', 'Country', 'Industry', 'link']]
     if source2 == 'Stock Analysis':
         df3 = load_or_scrape_file(source2.replace(' ', '').lower())
         df3['Time'] = pd.to_datetime(df3['Time'])

@@ -98,7 +98,7 @@ def get_articles(query: SearchQuery) -> List[NewsArticle]:
 
 # For testing
 if __name__ == "__main__":
-    json_file_path = 'OGL/utils/test_cases.json'  # Replace with your actual file path
+    json_file_path = './utils/test_cases.json'  # Replace with your actual file path
 
     with open(json_file_path, 'r') as file:
         data = [json.loads(line) for line in file]
@@ -113,9 +113,9 @@ if __name__ == "__main__":
     print("Articles collated, saving to json")
     file_name = '_'.join(test_query['names'] + test_query['companies'])
     try:
-        save_articles_to_json(articles, f"OGL/examples_articles/{file_name}_articles.json")
+        save_articles_to_json(articles, f"./examples_articles/{file_name}_articles.json")
     except:
         try:
-            save_articles_to_json(articles, f"OGL/examples_articles/{'_'.join(test_query['names'])}_articles.json")
+            save_articles_to_json(articles, f"./examples_articles/{'_'.join(test_query['names'])}_articles.json")
         except:
-            save_articles_to_json(articles, f"OGL/examples_articles/last_searched_articles.json")
+            save_articles_to_json(articles, f"./examples_articles/last_searched_articles.json")

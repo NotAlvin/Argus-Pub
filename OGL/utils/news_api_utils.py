@@ -19,7 +19,7 @@ from utils.news_api_template import NewsArticle
 DetectorFactory.seed = 0
 
 # Define the path for the JSON storage file
-SEARCH_HISTORY_FILE = 'OGL/utils/search_history.json'
+SEARCH_HISTORY_FILE = './utils/search_history.json'
 
 def load_search_history():
     if os.path.exists(SEARCH_HISTORY_FILE):
@@ -258,7 +258,14 @@ def get_image_from_link(link: str) -> str:
             return og_image['content']
         img = soup.find('img')
         if img and img['src']:
-            return img['src']
+            img_link = img['src']
+            if img_link[0] == '/': # Case where either https is cut off or need append home link
+                if img_link[1] == '/': # https is cut off
+                    img_link = img_link[2:]
+                else:
+                    home = urlparse(link).hostname # ending part of the link, attach the home
+                    img_link = home + img_link
+            return img_link
     except Exception as e:
         print(f"Error fetching image from {link}: {e}")
     return None

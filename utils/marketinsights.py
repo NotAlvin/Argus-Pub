@@ -110,8 +110,11 @@ def process_names(names):
     name = elements[:-1]
     return ' '.join(name)
 
-def scrape_url(url):
-    url = url.split('news')[0] + 'company/'
+def scrape_url(url, context='Contact'):
+    if context == "People":
+        url = url.split('news')[0] + 'company-governance/'
+    else:
+        url = url.split('news')[0] + 'company/'
     """
     Scrapes tables of managers, members of the board, and shareholders from a given URL.
     Returns a dictionary with the extracted data.
@@ -127,87 +130,107 @@ def scrape_url(url):
     return soup
 
 def scrape_tables(soup):
-    to_find = {'Managers': None, 'Members of the board': None, 'Name': None}
+    """
+    Scrapes tables from the BeautifulSoup object and returns structured data.
+    """
+    to_find = {'Manager': None, 'Director': None, 'Insider': None}
     tables = soup.find_all('div', class_='card-content')
+
+    structured_data = []
+
     for table in tables:
         try:
             title = table.find('tr').find('th').get_text(strip=True)
-            headers = [header.get_text(strip = True) for header in table.find_all('th')]
+        
+                
             if title in to_find.keys():
                 temp_table = table.find('table')
                 rows = temp_table.find('tbody').find_all('tr')
-                data = []
-                for row in rows:
-                    cols = row.find_all('td')
-                    data.append([col.get_text().replace('\n', '').strip() for col in cols])
+                structured_data.append(rows)
+        except:
+            continue
 
-                df = pd.DataFrame(data, columns=headers)
-                df[title] = df[title].apply(process_names)
-                if title != 'Name':
-                    to_find[title] = df.to_dict()
+    data = []
+    # Process each result set entry
+    for result_set in structured_data:
+        for row in result_set:
+            # Extract person info
+            person_info = row.find('td', class_='table-child--w240 table-child--top')
+            if person_info:
+                name_tag = person_info.find('p', class_='m-0')
+                age_tag = person_info.find('p', class_='m-0 txt-muted')
+                if name_tag and age_tag:
+                    name = name_tag.get_text(strip=True)
+                    age = age_tag.get_text(strip=True)
                 else:
-                    if 'Valuation' in headers:
-                        to_find['Shareholders'] = df.to_dict()
-                        break
-        except Exception:
-            pass
-    return to_find
+                    name = ''
+                    age = ''
 
-def get_industry(html_content):
-    try:
-        soup = BeautifulSoup(html_content, 'html.parser')
-        # Locate all card-header divs
-        card_headers = soup.find_all('div', class_='card-header')
+                # Extract roles info
+                roles_table = row.find('td', class_='table-child--top').find_next('table')
+                if roles_table:
+                    roles_rows = roles_table.find_all('tr')
+                    for roles_row in roles_rows:
+                        role = roles_row.find('td', class_='table-child--w240').get_text(strip=True)
+                        date = roles_row.find('td', class_='table-child--right table-child--w80').get_text(strip=True)
+                        data.append({
+                            'Name': name,
+                            'Age': age,
+                            'Position': role,
+                            'Date': date
+                        })
 
-        # Iterate through each card-header div and extract the required information
-        for card_header in card_headers:
-            # Get the title text from the card-header div
-            title_text = card_header.get_text(strip=True)
-            if title_text == 'Sector':
-                # Find the next sibling card-content div
-                card_content = card_header.find_next_sibling('div', class_='card-content')
-                
-                if card_content:
-                    # Get the sector details from the card-content div
-                    sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
-                    for sector in sector_details:
-                        if sector:
-                            return sector
+    # Create DataFrame
+    return data
+
+def get_industry(soup):
+    soup = BeautifulSoup(soup)
+    card_headers = soup.find_all('div', class_='card-header')
+
+    # Iterate through each card-header div and extract the required information
+    for card_header in card_headers:
+        # Get the title text from the card-header div
+        title_text = card_header.get_text(strip=True)
+        if title_text == 'Sector':
+            # Find the next sibling card-content div
+            card_content = card_header.find_next_sibling('div', class_='card-content')
+            
+            if card_content:
+                # Get the sector details from the card-content div
+                sector_details = list(map(lambda x: x.strip(), card_content.get_text().split('\n')))
+                for sector in sector_details:
+                    if sector:
+                        return sector
         return 'Unknown'
-    except:
-        return 'Unknown'
 
-def get_contact_information(html_content):
+def get_contact_information(soup):
     result = {}
+    soup = BeautifulSoup(soup)
     try:
-        soup = BeautifulSoup(html_content, 'html.parser')
-        # Find the div with class 'card-content'
-        contact_info_div = soup.find_all('div', class_ = 'card mb-15')
-        for div in contact_info_div:
-            try:
-            # Extract the paragraphs within this div
-                contact_info_paragraphs = div.find_all('p', class_='m-0')
-                if contact_info_paragraphs:
-                    
-                    company_name = contact_info_paragraphs[0].text
-                    address_line_1 = contact_info_paragraphs[1].text
-                    address_line_2 = contact_info_paragraphs[2].text
-                    phone_number = contact_info_paragraphs[3].text
-
-                    # Extract the website URL
-                    website = div.find('a', class_='m-0')['href']
-
-                # Print the extracted information
-                result['Company Name'] = company_name
-                result['Address Line 1'] = address_line_1
-                result['Address Line 2'] = address_line_2
-                result['Phone Number'] = phone_number
-                result['Website'] = website
-            except:
-                pass
-        return result
+    # Extract company details
+        company_details_section = soup.find_all('div', class_='card mb-15 pos-next')
     except:
         return result
+    for company_details in company_details_section:
+        #print(company_details.find_all('h3'))
+        try:
+            company_name = company_details.find('h3', class_='card-title').text.replace('Company details: ', '')
+            #print(f"Company Name: {company_name}")
+            company_info = company_details.find_all('p', class_='m-0')
+            address = company_info[1].text
+            city_state = company_info[2].text
+            phone = company_info[3].text
+            website = company_details.find('a', class_='m-0')['href']
+
+            # Save extracted data
+            result['Company Name'] = company_name
+            result['Address Line 1'] = address
+            result['Address Line 2'] = city_state
+            result['Phone Number'] = phone
+            result['Website'] = website
+        except:
+            pass
+    return result
 
 def get_phone_mapping(existing):
     if existing.empty:
@@ -357,54 +380,6 @@ def final_country(contact_information, candidates, tokenizer, model):
     else:
         return 'Unknown'
 
-# Add a 'Type' column to distinguish between Managers and Board members
-def process_temp_df(df):
-    name = df.columns[0]
-    df.columns = ['Name'] + list(df.columns[1:])
-    df['Executive Functions'] = name
-    return df
-
-def process_tables(data):
-    data = safe_literal_eval(data)
-    # Extract and flatten the nested dictionaries
-    if 'Managers' in data.keys() or 'Members of the board' in data.keys():
-        managers_data = data['Managers']
-        board_data = data['Members of the board']
-        if managers_data:
-        # Convert to DataFrames
-            managers_df = pd.DataFrame(managers_data)
-            managers_df = process_temp_df(managers_df)
-            if board_data:
-                board_df = pd.DataFrame(board_data)
-                board_df = process_temp_df(board_df)
-        
-                # Concatenate the DataFrames
-                temp_df = pd.concat([managers_df, board_df], ignore_index=True)
-            else:
-                temp_df = board_df
-
-            df_combined = temp_df.groupby(['Name', 'Title']).agg({
-                'Age': 'first',  # Take the first non-null value for 'Age'
-                'Since': 'first',  # Take the first non-null value for 'Since'
-                'Executive Functions': lambda x: ', '.join(sorted(set(x)))  # Combine and sort unique 'Type' values
-            }).reset_index()
-
-            df_combined.index = df_combined['Name']
-
-            executive_list = df_combined.to_dict(orient = 'split')['data']
-        else:
-            executive_list = []
-    else:
-        executive_list = []
-        
-    if 'Shareholders' in data.keys():
-        shareholder_data = data['Shareholders']
-        shareholder_df = pd.DataFrame(shareholder_data)
-        shareholder_list = shareholder_df.to_dict(orient = 'split')['data']
-    else:
-        shareholder_list = []
-
-    return executive_list, shareholder_list
 
 # Function to convert time strings to datetime using the current date
 def convert_to_datetime(date_str):
@@ -426,28 +401,23 @@ def convert_to_datetime(date_str):
     # If none of the formats match, return None
     return None
 
-def wrap_marketinsights_scraping_steps(tokenizer, model):
+def marketinsights_scraping_part1():
     print('Scraping main page')
 
     df = scrape_main_page_marketinsights()
 
     print('Scraping article HTML')
+    df['raw'] = df['link'].apply(lambda x: scrape_url(x))
+    df['raw2'] = df['link'].apply(lambda x: scrape_url(x, 'People'))
 
-    df['raw'] = df['link'].apply(scrape_url)
 
     print('Processing article HTML')
 
-    df['tables'] = df['raw'].apply(scrape_tables)
-    
-    df.to_csv('utils/data/Scraped News/temp_marketinsights.csv')
+    df['People'] = df['raw2'].apply(scrape_tables)
+    return df
 
-    df_temp = df['tables'].apply(lambda x: pd.Series(process_tables(x)))
-    df_temp.columns = ['Executives', 'Shareholders']
-    print(df_temp.head())
-    df[['Executives', 'Shareholders']] = df_temp
-
+def marketinsights_scraping_part2(df, tokenizer, model):
     print('Labelling Country and Industry')
-
     try:
         existing = pd.read_csv('utils/data/Scrape/phoneextensions.csv')
     except:
@@ -464,14 +434,20 @@ def wrap_marketinsights_scraping_steps(tokenizer, model):
     # Apply the conversion functions
     df['Time'] = df['date'].apply(convert_to_datetime)
     df.drop(['date'], axis = 1)
-    df.to_csv('marketinsights4.csv')
     return df
 
 def scrape_marketinsights():
     model_name = 'nomic-ai/nomic-embed-text-v1'
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
-    return wrap_marketinsights_scraping_steps(tokenizer, model)
+    df = marketinsights_scraping_part1()
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    selection = 'marketinsights'
+    directory = "./utils/data/Scraped News/"
+    file_path = f"{directory}/temp_{selection}_data_{current_date}.csv"
+    df.to_csv(file_path, index=False)
+    df2 = marketinsights_scraping_part2(df, tokenizer, model)
+    return df2
 
 if __name__ == "__main__":
     selection = 'marketinsights'
