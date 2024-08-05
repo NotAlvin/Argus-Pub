@@ -22,7 +22,7 @@ def generate_csv():
             shutil.move(os.path.join(directory, filename), os.path.join(archive_folder, filename))
     print(f"Files moved to {archive_folder}")
     # Load or scrape files from sources
-    for source in ['cnbc', 'marketinsights', 'stockanalysis']:
+    for source in ['stockanalysis']:#['cnbc', 'marketinsights', 'stockanalysis']:
         print(f'Generating {source} file')
         load_or_scrape_file(source, scrape=True)
     return

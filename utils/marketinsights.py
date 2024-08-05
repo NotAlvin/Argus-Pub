@@ -401,59 +401,65 @@ def convert_to_datetime(date_str):
     # If none of the formats match, return None
     return None
 
+# Define the scraping and processing functions
 def marketinsights_scraping_part1():
+    """Scrape the main page and article HTML from MarketInsights."""
     print('Scraping main page')
-
     df = scrape_main_page_marketinsights()
 
     print('Scraping article HTML')
-    df['raw'] = df['link'].apply(lambda x: scrape_url(x))
+    df['raw'] = df['link'].apply(scrape_url)
     df['raw2'] = df['link'].apply(lambda x: scrape_url(x, 'People'))
 
-
     print('Processing article HTML')
-
     df['People'] = df['raw2'].apply(scrape_tables)
     return df
 
 def marketinsights_scraping_part2(df, tokenizer, model):
+    """Label Country and Industry from the scraped data."""
     print('Labelling Country and Industry')
     try:
         existing = pd.read_csv('utils/data/Scrape/phoneextensions.csv')
-    except:
+    except FileNotFoundError:
         existing = pd.DataFrame()
+
     phone_storage = get_phone_mapping(existing)
     city_storage = get_city_mapping()
+
     df['Industry'] = df['raw'].apply(get_industry)
     df['Contact Information'] = df['raw'].apply(get_contact_information)
     df['Country_phone'] = df['Contact Information'].apply(lambda x: label_country_by_phone(x, phone_storage))
     df['Country_city'] = df['Contact Information'].apply(lambda x: label_country_by_city(x, city_storage))
-    df['Country_candidates'] = df.apply(lambda x: get_intersection(x.Country_phone, x.Country_city), axis = 1)
-    df['Country'] = df.apply(lambda x: final_country(x['Contact Information'], x.Country_candidates, tokenizer, model), axis = 1)
+    df['Country_candidates'] = df.apply(lambda x: get_intersection(x.Country_phone, x.Country_city), axis=1)
+    df['Country'] = df.apply(lambda x: final_country(x['Contact Information'], x.Country_candidates, tokenizer, model), axis=1)
 
     # Apply the conversion functions
     df['Time'] = df['date'].apply(convert_to_datetime)
-    df.drop(['date'], axis = 1)
+    df.drop(['date'], axis=1, inplace=True)
     return df
 
 def scrape_marketinsights():
+    """Scrape MarketInsights data and process it."""
     model_name = 'nomic-ai/nomic-embed-text-v1'
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+
     df = marketinsights_scraping_part1()
     current_date = datetime.now().strftime("%Y-%m-%d")
     selection = 'marketinsights'
     directory = "./utils/data/Scraped News/"
-    file_path = f"{directory}/temp_{selection}_data_{current_date}.csv"
-    df.to_csv(file_path, index=False)
-    df2 = marketinsights_scraping_part2(df, tokenizer, model)
-    return df2
+    temp_file_path = f"{directory}/temp_{selection}_data_{current_date}.csv"
+    
+    df.to_csv(temp_file_path, index=False)
+    
+    df_processed = marketinsights_scraping_part2(df, tokenizer, model)
+    return df_processed
 
 if __name__ == "__main__":
+    current_date = datetime.now().strftime("%Y-%m-%d")
     selection = 'marketinsights'
     directory = "./utils/data/Scraped News/"
-    file_pattern = f"{selection}_data_*.csv"
-    df = scrape_marketinsights()
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    file_path = f"{directory}/{selection}_data_{current_date}.csv"
-    df.to_csv(file_path, index=False)
+    output_file_path = f"{directory}/{selection}_data_{current_date}.csv"
+    
+    df_final = scrape_marketinsights()
+    df_final.to_csv(output_file_path, index=False)
