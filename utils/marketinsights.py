@@ -201,7 +201,7 @@ def get_industry(soup):
                 for sector in sector_details:
                     if sector:
                         return sector
-        return 'Unknown'
+    return 'Unknown'
 
 def get_contact_information(soup):
     result = {}
