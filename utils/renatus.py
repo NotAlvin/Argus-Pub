@@ -108,16 +108,22 @@ def scrape_newsletters():
     print(formatted_dates)
     generated = False
     curr = -1
+    retries = 0
     while not generated:
+        #utils/data/Renatus Newsletter
         try:
             url = generate_url(formatted_dates[curr])
             print(f"Fetching newsletter from URL: {url}")
             soup, df = get_latest_newsletter(url)
-            df.to_csv(f'./data/Renatus Newsletter/renatus_{formatted_dates[curr]}.csv')
+            df.to_csv(f'./utils/data/Renatus Newsletter/renatus_{formatted_dates[curr]}.csv')
             generated = True
         except Exception as e:
             curr -= 1
+            retries += 1
             print(e)
+            if retries > 3:
+                break
+
     
 
 # Main block to fetch and print the latest newsletter
