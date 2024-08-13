@@ -367,17 +367,20 @@ def find_country(address, countries, tokenizer, model):
     return most_similar_country
 
 def final_country(contact_information, candidates, tokenizer, model):
-    if candidates:
-        if len(candidates) == 1:
-            return list(candidates)[0]
-        else:
-            if contact_information:
-                temp = contact_information['Address Line 2'].split(' ')
-                city = extract_city_names(temp)
-                return find_country(city, list(candidates), tokenizer, model)
+    try:
+        if candidates:
+            if len(candidates) == 1:
+                return list(candidates)[0]
             else:
-                return 'Unknown'
-    else:
+                if contact_information:
+                    temp = contact_information['Address Line 2'].split(' ')
+                    city = extract_city_names(temp)
+                    return find_country(city, list(candidates), tokenizer, model)
+                else:
+                    return 'Unknown'
+        else:
+            return 'Unknown'
+    except:
         return 'Unknown'
 
 
