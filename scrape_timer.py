@@ -22,24 +22,12 @@ def generate_csv():
             shutil.move(os.path.join(directory, filename), os.path.join(archive_folder, filename))
     print(f"Files moved to {archive_folder}")
     # Load or scrape files from sources
-    for source in ['cnbc', 'stockanalysis']:#, 'marketinsights']:
+    for source in ['marketinsights']:#['cnbc', 'stockanalysis']:#, 'marketinsights']:
         print(f'Generating {source} file')
         load_or_scrape_file(source, scrape=True)
     return
 
 
 if __name__ == "__main__":
-    # Schedule the job every week
-    schedule.every().week.do(generate_csv)
-
-    # Run the script immediately
+# Run the script immediately
     generate_csv()
-
-    while True:
-        schedule.run_pending()
-        now = datetime.now()
-        next_run = schedule.next_run()  # Get the time of the next scheduled run
-        if next_run:
-            sleep_time = (next_run - now).total_seconds()
-            if sleep_time > 0:
-                time.sleep(sleep_time)
